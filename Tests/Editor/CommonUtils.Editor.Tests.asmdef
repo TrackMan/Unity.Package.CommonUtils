@@ -1,13 +1,16 @@
 {
     "name": "CommonUtils.EditorTests",
+    "rootNamespace": "",
     "references": [
-        "CommonUtils",
         "UnityEngine.TestRunner",
-        "UnityEditor.TestRunner"
+        "UnityEditor.TestRunner",
+        "CommonUtils"
     ],
     "includePlatforms": [
         "Editor"
     ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
     "overrideReferences": true,
     "precompiledReferences": [
         "nunit.framework.dll"
@@ -16,5 +19,6 @@
     "defineConstraints": [
         "UNITY_INCLUDE_TESTS"
     ],
+    "versionDefines": [],
     "noEngineReferences": false
 }
