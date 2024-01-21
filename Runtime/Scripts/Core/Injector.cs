@@ -78,15 +78,17 @@ namespace Trackman
         public static void Add<T>(this T mono) where T : MonoBehaviour, IMonoBehaviourCollectionItem
         {
             Type monoType = mono.GetType();
-            if (collections.TryGetValue(monoType, out IList value) && value is List<T> list)
+            if (collections.TryGetValue(monoType, out IList value))
             {
-                if (list.Contains(mono)) return;
-                list.Add(mono);
+                if (value.Contains(mono)) return;
             }
             else
             {
-                collections.Add(monoType, new List<T> { mono });
+                value = (IList)Activator.CreateInstance(typeof(List<>).MakeGenericType(monoType));
+                collections.Add(monoType, value);
             }
+
+            value.Add(mono);
         }
         public static void Remove<T>(this T mono) where T : MonoBehaviour, IMonoBehaviourCollectionItem
         {
@@ -97,10 +99,10 @@ namespace Trackman
         public static IReadOnlyList<T> GetCollection<T>() where T : MonoBehaviour, IMonoBehaviourCollectionItem
         {
             Type monoType = typeof(T);
-            if (collections.TryGetValue(monoType, out IList value) && value is List<T> list) return list;
+            if (!collections.TryGetValue(monoType, out IList value))
+                collections.Add(monoType, value = new List<T>());
 
-            collections.Add(monoType, list = new List<T>());
-            return list;
+            return (IReadOnlyList<T>)value;
         }
         #endregion
     }
