@@ -1,3 +1,5 @@
+using System.Text;
+
 namespace Trackman
 {
     public static class FormatExtensions
@@ -31,6 +33,16 @@ namespace Trackman
             };
         public static string Nick(this string value) => $"[{value}]";
         public static string Nick(this IClassName value, string execution = default) => $"[{(execution.NotNullOrEmpty() ? $"{execution} => " : "")}{value.ClassName}]";
+        public static string AddSpaces(this string text)
+        {
+            StringBuilder builder = new(text.Length);
+            for (int i = 0; i < text.Length; i++)
+            {
+                if (char.IsUpper(text[i]) && i != 0) builder.Append(" ");
+                builder.Append(text[i]);
+            }
+            return builder.ToString();
+        }
         #endregion
     }
 }
