@@ -28,6 +28,8 @@ namespace Trackman
             if (buffer is not null && buffer.IsValid()) buffer.Release();
         }
         public static T OrNull<T>(this T unityObject) where T : Object => unityObject ? unityObject : null;
+        public static bool NotNull<T>(this T unityObject) where T : IMonoBehaviour => unityObject?.MonoBehavior;
+        public static bool Null<T>(this T unityObject) where T : IMonoBehaviour => !unityObject?.MonoBehavior;
 
         public static bool ValidIndex(this int value) => value != -1;
         public static bool NotMaxValue(this uint value) => value != uint.MaxValue;
