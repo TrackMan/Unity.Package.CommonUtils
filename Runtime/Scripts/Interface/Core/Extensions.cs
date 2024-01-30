@@ -57,10 +57,12 @@ namespace Trackman
                 _ => throw new ArgumentException()
             };
 
+        // ReSharper disable InconsistentNaming
         public static bool ANY<T>(this T value, T arg) where T : Enum => Convert.ToInt32(value).ANY(Convert.ToInt32(arg));
         public static bool ANY(this int value, int arg) => (value & arg) != 0;
         public static bool AND<T>(this T value, T arg) where T : Enum => Convert.ToInt32(value).AND(Convert.ToInt32(arg));
         public static bool AND(this int value, int arg) => (value & arg) == arg;
+        // ReSharper restore InconsistentNaming
         public static T AddFlag<T>(this T value, T arg) where T : Enum => (T)Enum.ToObject(typeof(T), Convert.ToInt32(value) | Convert.ToInt32(arg));
         public static T RemoveFlag<T>(this T value, T arg) where T : Enum => (T)Enum.ToObject(typeof(T), Convert.ToInt32(value) & ~Convert.ToInt32(arg));
 
@@ -69,7 +71,7 @@ namespace Trackman
         {
             foreach (T element in enumerable) action(element);
         }
-        public static void ForEach<T, U>(this IEnumerable<T> enumerable, Action<T, U> action, U argument)
+        public static void ForEach<T, TArg>(this IEnumerable<T> enumerable, Action<T, TArg> action, TArg argument)
         {
             foreach (T element in enumerable) action(element, argument);
         }
@@ -144,6 +146,11 @@ namespace Trackman
         public static int ToDigit(this bool value) => value ? 1 : 0;
         public static int ToSign(this bool value) => value ? 1 : -1;
         public static Vector3 ToVector3(this IReadOnlyList<float> value) => new (value[0], value[1], value[2]);
+        public static Color ToColor(this string color) => ColorUtility.TryParseHtmlString(color, out Color result) ? result : throw new ArgumentException(nameof(color));
+        public static string ToHexRGB(this Color color) => ColorUtility.ToHtmlStringRGB(color);
+        // ReSharper disable once InconsistentNaming
+        public static string ToHexRGBA(this Color color) => ColorUtility.ToHtmlStringRGBA(color);
+        public static Color SetAlpha(this Color color, float alpha) => new(color.r, color.g, color.b, alpha);
         #endregion
 
         #region List Methods
