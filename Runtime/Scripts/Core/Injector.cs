@@ -63,7 +63,7 @@ namespace Trackman
 #if UNITY_EDITOR
                 else if (!Application.isPlaying)
                 {
-                    singletonMono = MonoBehaviour.FindObjectsOfType<MonoBehaviour>().FirstOrDefault(x => x.GetType() == property.PropertyType);
+                    singletonMono = MonoBehaviour.FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None).FirstOrDefault(x => property.PropertyType.IsInstanceOfType(x));
                     if (singletonMono) property.SetValue(value, singletonMono);
                 }
 #endif
