@@ -75,77 +75,75 @@ namespace Trackman
         float Acceleration { get; }
         bool Loop { get; }
 
-        #pragma warning disable S100, TM0006, InconsistentNaming
-        protected internal float elapsed { get; set; }
-        protected internal float duration { get; set; }
-        protected internal bool started { get; set; }
-        protected internal bool pause { get; set; }
-        protected internal bool done { get; set; }
-        protected internal float acceleration { get; set; }
-        protected internal bool loop { get; set; }
-        #pragma warning restore S100, TM0006, InconsistentNaming
+        float ElapsedValue { get; protected set; }
+        float DurationValue { get; set; }
+        bool StartedValue { get; protected set; }
+        bool PauseValue { get; set; }
+        bool DoneValue { get; protected set; }
+        float AccelerationValue { get; protected set; }
+        bool LoopValue { get; protected set; }
         #endregion
 
         #region Methods
         void Start(float duration) => Start(0, duration);
         void Start(float elapsed, float duration, float acceleration = 1.0f, bool loop = false);
-        protected internal void StartDefault(float elapsed, float duration, float acceleration, bool loop)
+        void StartDefault(float elapsed, float duration, float acceleration, bool loop)
         {
-            started = true;
-            done = false;
-            pause = false;
-            this.elapsed = elapsed;
-            this.acceleration = acceleration;
-            this.duration = duration;
-            this.loop = loop;
+            StartedValue = true;
+            DoneValue = false;
+            PauseValue = false;
+            ElapsedValue = elapsed;
+            AccelerationValue = acceleration;
+            DurationValue = duration;
+            LoopValue = loop;
         }
         void PreStart(float duration, float acceleration = 1.0f, bool loop = false) => Start(-Time.deltaTime, duration, acceleration, loop);
         void Cancel();
-        protected internal void CancelDefault()
+        void CancelDefault()
         {
-            started = false;
-            done = false;
-            pause = false;
-            elapsed = -1;
-            acceleration = 1;
-            duration = -1;
-            loop = false;
+            StartedValue = false;
+            DoneValue = false;
+            PauseValue = false;
+            ElapsedValue = -1;
+            AccelerationValue = 1;
+            DurationValue = -1;
+            LoopValue = false;
         }
         void ChangeAcceleration(float acceleration);
-        protected internal void ChangeAccelerationDefault(float acceleration)
+        void ChangeAccelerationDefault(float acceleration)
         {
-            this.acceleration = acceleration;
+            AccelerationValue = acceleration;
         }
         /// <summary>
         /// Moves timer by Time.deltaTime
         /// </summary>
         /// <returns>false if just finished, else true</returns>
         bool ChronoTrigger();
-        protected internal bool ChronoTriggerDefault()
+        bool ChronoTriggerDefault()
         {
             if (!Started) return !Done;
             float dt = Time.deltaTime * Acceleration;
             if (Pause) dt = 0;
             if (Elapsed >= Duration)
             {
-                if (Loop) elapsed = 0;
-                else done = true;
+                if (Loop) ElapsedValue = 0;
+                else DoneValue = true;
             }
             else if (Elapsed + dt > Duration)
             {
                 if (Loop)
                 {
-                    elapsed = Elapsed + dt - Duration;
+                    ElapsedValue = Elapsed + dt - Duration;
                 }
                 else
                 {
-                    elapsed = Duration;
-                    done = true;
+                    ElapsedValue = Duration;
+                    DoneValue = true;
                 }
             }
             else
             {
-                elapsed += dt;
+                ElapsedValue += dt;
             }
             return !Done;
         }
