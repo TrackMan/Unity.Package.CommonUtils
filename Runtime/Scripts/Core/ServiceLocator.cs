@@ -14,6 +14,10 @@ namespace Trackman
         static MonoBehaviour[] monoCache;
         #endregion
 
+        #region Constructors
+        static ServiceLocator() => DisposeStatic.OnDisposeStatic += ClearInterfaces;
+        #endregion
+
         #region Methods
         public static void ClearInterfaces()
         {

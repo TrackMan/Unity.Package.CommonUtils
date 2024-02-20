@@ -13,7 +13,7 @@ namespace Trackman
         public static event Action OnDisposeStatic;
         #endregion
 
-        #region Fields
+        #region Methods
         public static void Dispose() => OnDisposeStatic?.Invoke();
         #endregion
     }
