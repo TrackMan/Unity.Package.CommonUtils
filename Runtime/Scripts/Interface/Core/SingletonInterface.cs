@@ -37,6 +37,7 @@ namespace Trackman
             Awake();
             OnEnable();
         }
+        protected virtual void OnDestroy() => instance = default;
         #endregion
     }
 }

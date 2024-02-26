@@ -16,6 +16,16 @@ namespace Trackman
         static Dictionary<Type, IList> collections = new();
         #endregion
 
+        #region Constructors
+        static Injector() => DisposeStatic.OnDisposeStatic += () =>
+        {
+            typeInjectProperties.Clear();
+            injectMonoBehaviours.Clear();
+            singletonInjectable.Clear();
+            collections.Clear();
+        };
+        #endregion
+
         #region Methods
         public static void Register<TClass, TInterface>(this TClass value) where TClass : MonoBehaviour, TInterface where TInterface : ISingletonInjectable
         {
