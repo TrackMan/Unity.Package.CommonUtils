@@ -8,6 +8,7 @@ namespace Trackman
     {
         #region Properties
         MonoBehaviour MonoBehavior => this.As<MonoBehaviour>();
+        string Name => MonoBehavior.name;
         Transform Transform => MonoBehavior.transform;
         GameObject GameObject => MonoBehavior.gameObject;
         #endregion
