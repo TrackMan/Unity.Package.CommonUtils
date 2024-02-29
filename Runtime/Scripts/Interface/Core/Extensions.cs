@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using UnityEngine;
+using Debug = UnityEngine.Debug;
 using Object = UnityEngine.Object;
 
 #pragma warning disable IDE0060, RCS1175
@@ -70,6 +71,20 @@ namespace Trackman
         public static void ForEach<T>(this IEnumerable<T> enumerable, Action<T> action)
         {
             foreach (T element in enumerable) action(element);
+        }
+        public static void ForEachSafe<T>(this IEnumerable<T> enumerable, Action<T> action)
+        {
+            foreach (T element in enumerable)
+            {
+                try
+                {
+                    action(element);
+                }
+                catch (Exception exception)
+                {
+                    Debug.LogException(exception);
+                }
+            }
         }
         public static void ForEach<T, TArg>(this IEnumerable<T> enumerable, Action<T, TArg> action, TArg argument)
         {
