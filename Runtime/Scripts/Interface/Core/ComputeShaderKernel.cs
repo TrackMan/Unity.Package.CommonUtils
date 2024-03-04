@@ -11,8 +11,8 @@ namespace Trackman.CourseTurf.Utility
     public sealed class ComputeShaderKernel : IDisposable
     {
 #if UNITY_EDITOR
-        public const string EnableDebugMessagesKeyword = "ENABLE_DEBUG_MESSAGES";
-        public const string DebugMessagesBufferName = "debugMessages";
+        public const string enableDebugMessagesKeyword = "ENABLE_DEBUG_MESSAGES";
+        public const string debugMessagesBufferName = "debugMessages";
 #endif
 
         #region Containers
@@ -39,8 +39,10 @@ namespace Trackman.CourseTurf.Utility
         readonly int kernelID;
 
         readonly Dictionary<string, GraphicsBuffer> buffers = new();
+#if UNITY_EDITOR
         GraphicsBuffer debugMessagesBuffer;
         LocalKeyword? debugMessagesKeyword;
+#endif
         #endregion
 
         #region Constructors
@@ -70,14 +72,18 @@ namespace Trackman.CourseTurf.Utility
         {
             GraphicsBuffer buffer = CreateBuffer<T>(name, target, data.Length);
             buffer.SetData(data);
+#if UNITY_EDITOR
             debugMessagesKeyword = null;
+#endif
             return buffer;
         }
         public void ReleaseBuffers()
         {
             buffers.Values.ForEach(x => x.ReleaseSafe());
             buffers.Clear();
+#if UNITY_EDITOR
             debugMessagesBuffer.ReleaseSafe();
+#endif
         }
         public void SetExternalBuffer(string name, GraphicsBuffer buffer)
         {
@@ -120,7 +126,7 @@ namespace Trackman.CourseTurf.Utility
 #if UNITY_EDITOR
             if (!debugMessagesKeyword.HasValue)
             {
-                debugMessagesKeyword = computeShader.keywordSpace.FindKeyword(EnableDebugMessagesKeyword);
+                debugMessagesKeyword = computeShader.keywordSpace.FindKeyword(enableDebugMessagesKeyword);
                 if (!debugMessagesKeyword.Value.isValid) return;
             }
 
@@ -129,7 +135,7 @@ namespace Trackman.CourseTurf.Utility
             if (debugMessagesBuffer?.IsValid() != true)
                 debugMessagesBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Append, 1024, UnsafeUtility.SizeOf<DebugMessage>());
 
-            computeShader.SetBuffer(kernelID, DebugMessagesBufferName, debugMessagesBuffer);
+            computeShader.SetBuffer(kernelID, debugMessagesBufferName, debugMessagesBuffer);
             debugMessagesBuffer.SetData(Enumerable.Repeat<byte>(0, UnsafeUtility.SizeOf<DebugMessage>() * debugMessagesBuffer.count).ToArray());
             debugMessagesBuffer.SetCounterValue(0);
 #endif
