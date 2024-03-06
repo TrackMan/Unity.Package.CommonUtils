@@ -15,7 +15,8 @@ namespace Trackman.Editor.Core
         [MenuItem("Trackman/Recompile all scripts %&r", false, (int)MenuOrder.Functions + 1)]
         public static void RecompileAllScripts() => CompilationPipeline.RequestScriptCompilation(RequestScriptCompilationOptions.CleanBuildCache);
 
-        [UsedImplicitly] public static void SyncSolution()
+        [UsedImplicitly] 
+        public static void SyncSolution()
         {
             Debug.Log($"[{nameof(RecompileUtils)}] Starting solution sync...");
 
@@ -35,7 +36,8 @@ namespace Trackman.Editor.Core
             {
                 Debug.LogException(exception);
             }
-            finally{
+            finally
+            {
                 EditorPrefs.SetInt("unity_project_generation_flag", oldValue);
                 EditorApplication.Exit(0);
             }
