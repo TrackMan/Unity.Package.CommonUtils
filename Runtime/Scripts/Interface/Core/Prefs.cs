@@ -112,6 +112,27 @@ namespace Trackman
         #endregion
     }
 
+    public class ScenePrefs : Prefs
+    {
+        #region Properties
+        protected override string ScopePrefix { get; }
+        #endregion
+
+        #region Constructors
+        public ScenePrefs(Scene scene)
+        {
+#if UNITY_EDITOR
+            if (scene.IsValid() && !string.IsNullOrEmpty(scene.path) && UnityEditor.PackageManager.PackageInfo.FindForAssetPath(scene.path) is { } scenePackageInfo)
+            {
+                ScopePrefix = Path.Combine(scenePackageInfo.displayName.Split('.')[^1], scene.path);
+                return;
+            }
+#endif
+            ScopePrefix = scene.IsValid() ? scene.path : Application.productName;
+        }
+        #endregion
+    }
+
     public class ProjectPrefs : Prefs
     {
         #region Fields

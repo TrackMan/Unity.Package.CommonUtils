@@ -4,26 +4,32 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace Trackman
 {
     public static class Injector
     {
         #region Containers
-        static Dictionary<Type, PropertyInfo[]> typeInjectProperties = new();
-        static Dictionary<Type, List<(PropertyInfo property, MonoBehaviour target)>> injectMonoBehaviours = new();
-        static Dictionary<Type, MonoBehaviour> singletonInjectable = new();
-        static Dictionary<Type, IList> collections = new();
+        static readonly Dictionary<Type, PropertyInfo[]> typeInjectProperties = new();
+        static readonly Dictionary<Type, List<(PropertyInfo property, MonoBehaviour target)>> injectMonoBehaviours = new();
+        static readonly Dictionary<Type, MonoBehaviour> singletonInjectable = new();
+        static readonly Dictionary<Type, IList> collections = new();
         #endregion
 
         #region Constructors
-        static Injector() => DisposeStatic.OnDisposeStatic += () =>
+        static Injector() => DisposeStatic.OnDisposeStatic += Initialize;
+#if UNITY_EDITOR
+        [UnityEditor.InitializeOnLoadMethod]
+#endif
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void Initialize()
         {
             typeInjectProperties.Clear();
             injectMonoBehaviours.Clear();
             singletonInjectable.Clear();
             collections.Clear();
-        };
+        }
         #endregion
 
         #region Methods
@@ -73,7 +79,7 @@ namespace Trackman
 #if UNITY_EDITOR
                 else if (!Application.isPlaying)
                 {
-                    singletonMono = MonoBehaviour.FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None).FirstOrDefault(x => property.PropertyType.IsInstanceOfType(x));
+                    singletonMono = Object.FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None).FirstOrDefault(x => property.PropertyType.IsInstanceOfType(x));
                     if (singletonMono) property.SetValue(value, singletonMono);
                 }
 #endif
@@ -82,8 +88,8 @@ namespace Trackman
         public static void Eject<T>(this T mono) where T : MonoBehaviour, IMonoBehaviourInjectable
         {
             Type monoType = mono.GetType();
-            if (injectMonoBehaviours.ContainsKey(monoType))
-                injectMonoBehaviours[monoType].RemoveAll(x => x.target == mono);
+            if (injectMonoBehaviours.TryGetValue(monoType, out List<(PropertyInfo property, MonoBehaviour target)> behaviour))
+                behaviour.RemoveAll(x => x.target == mono);
         }
         public static void Add<T>(this T mono) where T : MonoBehaviour, IMonoBehaviourCollectionItem
         {
@@ -111,7 +117,14 @@ namespace Trackman
             Type monoType = typeof(T);
             if (!collections.TryGetValue(monoType, out IList value))
                 collections.Add(monoType, value = new List<T>());
-
+#if UNITY_EDITOR
+            if (!Application.isPlaying)
+            {
+                value.Clear();
+                foreach (T item in Object.FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None).OfType<T>())
+                    value.Add(item);
+            }
+#endif
             return (IReadOnlyList<T>)value;
         }
         #endregion
