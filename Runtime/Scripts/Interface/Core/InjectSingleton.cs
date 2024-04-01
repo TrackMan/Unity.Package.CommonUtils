@@ -11,7 +11,8 @@ namespace Trackman
         #endregion
 
         #region Properties
-        public static TInterface I => instance.OrNull() ?? (instance = FindAnyObjectByType<TClass>());
+        public static TClass Instance => instance.OrNull() ?? (instance = FindAnyObjectByType<TClass>());
+        public static TInterface I => Instance;
         #endregion
 
         #region Methods
