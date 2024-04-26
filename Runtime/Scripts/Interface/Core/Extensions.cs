@@ -194,6 +194,31 @@ namespace Trackman
             list.RemoveAt(lastIndex);
             return value;
         }
+        public static bool SyncWith<T>(this List<T> list, IEnumerable<T> source)
+        {
+            using IEnumerator<T> target = source.GetEnumerator();
+            int originalCount = list.Count;
+            int syncCount = 0;
+            bool changed = false;
+
+            while (target.MoveNext())
+            {
+                if (changed || syncCount >= originalCount || Equals(list[syncCount], (target.Current)))
+                {
+                    changed = true;
+                    if (syncCount < originalCount) list[syncCount] = target.Current;
+                    else list.Add(target.Current);
+                }
+
+                syncCount++;
+            }
+
+            if (syncCount >= originalCount) return changed;
+            
+            list.RemoveRange(syncCount, originalCount - syncCount);
+            return true;
+
+        }
         #endregion
     }
 }
