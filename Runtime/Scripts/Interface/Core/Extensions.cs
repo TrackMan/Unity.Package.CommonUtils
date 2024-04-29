@@ -203,7 +203,7 @@ namespace Trackman
 
             while (target.MoveNext())
             {
-                if (changed || syncCount >= originalCount || Equals(list[syncCount], (target.Current)))
+                if (changed || syncCount >= originalCount || !Equals(list[syncCount], (target.Current)))
                 {
                     changed = true;
                     if (syncCount < originalCount) list[syncCount] = target.Current;
