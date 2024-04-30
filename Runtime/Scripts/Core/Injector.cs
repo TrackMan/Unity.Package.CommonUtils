@@ -18,17 +18,34 @@ namespace Trackman
         #endregion
 
         #region Constructors
-        static Injector() => DisposeStatic.OnDisposeStatic += Initialize;
+        static Injector() => DisposeStatic.OnDisposeStatic += Clear;
+        static void Clear()
+        {
+            typeInjectProperties.Clear();
+            injectMonoBehaviours.Clear();
+            singletonInjectable.Clear();
+            collections.Clear();
+        }
 #if UNITY_EDITOR
         [UnityEditor.InitializeOnLoadMethod]
 #endif
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         static void Initialize()
         {
-            typeInjectProperties.Clear();
-            injectMonoBehaviours.Clear();
-            singletonInjectable.Clear();
-            collections.Clear();
+#if UNITY_EDITOR
+            void OnHierarchyChanged()
+            {
+                foreach ((Type type, IList collection) in collections)
+                {
+                    collection.Clear();
+                    foreach (Object value in Object.FindObjectsByType(type, FindObjectsSortMode.None))
+                        collection.Add(value);
+                }
+            }
+
+            if (!Application.isPlaying) UnityEditor.EditorApplication.hierarchyChanged += OnHierarchyChanged; // Keep track of all collections in editor
+#endif
+            Clear();
         }
         #endregion
 
@@ -77,7 +94,7 @@ namespace Trackman
                     property.SetValue(value, singletonMono);
                 }
 #if UNITY_EDITOR
-                else if (!Application.isPlaying)
+                else if (!Application.isPlaying) // attempt to find a singleton in editor
                 {
                     singletonMono = Object.FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None).FirstOrDefault(x => property.PropertyType.IsInstanceOfType(x));
                     if (singletonMono) property.SetValue(value, singletonMono);
@@ -117,14 +134,6 @@ namespace Trackman
             Type monoType = typeof(T);
             if (!collections.TryGetValue(monoType, out IList value))
                 collections.Add(monoType, value = new List<T>());
-#if UNITY_EDITOR
-            if (!Application.isPlaying)
-            {
-                value.Clear();
-                foreach (T item in Object.FindObjectsByType<T>(FindObjectsSortMode.None))
-                    value.Add(item);
-            }
-#endif
             return (IReadOnlyList<T>)value;
         }
         #endregion
