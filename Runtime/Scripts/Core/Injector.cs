@@ -121,7 +121,7 @@ namespace Trackman
             if (!Application.isPlaying)
             {
                 value.Clear();
-                foreach (T item in Object.FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None).OfType<T>())
+                foreach (T item in Object.FindObjectsByType<T>(FindObjectsSortMode.None))
                     value.Add(item);
             }
 #endif
