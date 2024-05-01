@@ -33,17 +33,14 @@ namespace Trackman
         static void Initialize()
         {
 #if UNITY_EDITOR
-            void OnHierarchyChanged()
+            void UpdateCollections()
             {
                 foreach ((Type type, IList collection) in collections)
-                {
-                    collection.Clear();
-                    foreach (Object value in Object.FindObjectsByType(type, FindObjectsSortMode.None))
-                        collection.Add(value);
-                }
+                    UpdateCollection(type, collection);
             }
 
-            if (!Application.isPlaying) UnityEditor.EditorApplication.hierarchyChanged += OnHierarchyChanged; // Keep track of all collections in editor
+            if (!Application.isPlaying)
+                UnityEditor.EditorApplication.hierarchyChanged += UpdateCollections; // Keep track of all collections in editor
 #endif
             Clear();
         }
@@ -133,9 +130,26 @@ namespace Trackman
         {
             Type monoType = typeof(T);
             if (!collections.TryGetValue(monoType, out IList value))
+            {
                 collections.Add(monoType, value = new List<T>());
+#if UNITY_EDITOR
+                if (!Application.isPlaying)
+                    UpdateCollection(monoType, value);
+#endif
+            }
             return (IReadOnlyList<T>)value;
         }
+        #endregion
+
+        #region Support Methods
+#if UNITY_EDITOR
+        static void UpdateCollection(Type type, IList collection)
+        {
+            collection.Clear();
+            foreach (Object value in Object.FindObjectsByType(type, FindObjectsSortMode.None))
+                collection.Add(value);
+        }
+#endif
         #endregion
     }
 }
