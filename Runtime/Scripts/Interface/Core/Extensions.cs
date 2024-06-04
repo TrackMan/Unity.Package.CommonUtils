@@ -214,10 +214,19 @@ namespace Trackman
             }
 
             if (syncCount >= originalCount) return changed;
-            
+
             list.RemoveRange(syncCount, originalCount - syncCount);
             return true;
-
+        }
+        public static void Shuffle<T>(this IList<T> list)
+        {
+            int n = list.Count;
+            while (n > 1)
+            {
+                int k = UnityEngine.Random.Range(0, n);
+                n--;
+                (list[k], list[n]) = (list[n], list[k]);
+            }
         }
         #endregion
     }
