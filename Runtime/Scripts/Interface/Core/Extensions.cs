@@ -158,6 +158,20 @@ namespace Trackman
 
             return sum > 0;
         }
+        public static void ReverseInPlace<T>(this IList<T> array)
+        {
+            if (array is not { Count: > 1 }) return;
+
+            int left = 0;
+            int right = array.Count - 1;
+
+            while (left < right)
+            {
+                (array[left], array[right]) = (array[right], array[left]);
+                left++;
+                right--;
+            }
+        }
         public static int ToDigit(this bool value) => value ? 1 : 0;
         public static int ToSign(this bool value) => value ? 1 : -1;
         public static Vector3 ToVector3(this IReadOnlyList<float> value) => new (value[0], value[1], value[2]);
