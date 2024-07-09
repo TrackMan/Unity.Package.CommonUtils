@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -16,6 +17,25 @@ namespace Trackman
         public const string requestSucceeded = "ok";
         public const string sentOk = "Sent";
         public const string receivedOk = "Received";
+
+        #region Containers
+        public class HttpException : Exception
+        {
+            #region Properties
+            public long ErrorCode { get; }
+            public string Error { get; }
+            #endregion
+
+            #region Constructors
+            public HttpException(long errorCode = -1, string error = default)
+                : base((string.IsNullOrEmpty(error) ? string.Empty : $"{error}: ") + $"HTTP {errorCode}")
+            {
+                ErrorCode = errorCode;
+                Error = error;
+            }
+            #endregion
+        }
+        #endregion
 
         #region Fields
         static readonly List<UnityWebRequest> webRequests = new(16);
@@ -68,7 +88,7 @@ namespace Trackman
                 string PrettyPrintBytes(byte[] bytes, IDictionary<string, string> headers)
                 {
                     if (bytes is null) return "null";
-                    bool textContent = (headers is not null && headers.TryGetValue("Content-Type", out string value) && value.Contains("Application/json")) || (contentType.NotNullOrEmpty() && contentType!.Contains("Application/json"));
+                    bool textContent = (headers is not null && headers.TryGetValue("Content-Type", out string value) && value.ToLower().Contains("application/json")) || (contentType.NotNullOrEmpty() && contentType.ToLower().Contains("application/json"));
                     return textContent && bytes.Length < saneDumpLength ? Encoding.UTF8.GetString(bytes) : $"<binary {bytes.Length} bytes>";
                 }
 
@@ -126,8 +146,8 @@ namespace Trackman
 
             if (request.result != UnityWebRequest.Result.Success)
             {
-                Debug.LogWarning($"[{type.Nick()}] {method} {request.url} = {request.result} \n{request.responseCode}\n{request.error}\n{DebugString()}");
-                throw new Exception(request.responseCode.ToString(), new Exception(request.error));
+                Debug.LogWarning($"[{type.Nick()}] {method} {request.url} = {request.result} \n{request.responseCode}\n{request.error}\n{DebugString(request.downloadHandler?.data)}");
+                throw new HttpException(request.responseCode, request.error);
             }
 
             Debug.Log($"[{type.Nick()}] {method} {request.url} {ByteSizeString(request)} \n{DebugString(request.downloadHandler.data)}");
