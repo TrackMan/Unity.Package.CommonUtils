@@ -182,6 +182,39 @@ namespace Trackman
         public static Color SetAlpha(this Color color, float alpha) => new(color.r, color.g, color.b, alpha);
         #endregion
 
+        #region Enumerable Methods
+        public static T MaxBy<T, TCompare>(this IEnumerable<T> sequence, Func<T, TCompare> selector) where TCompare : IComparable<TCompare>
+        {
+            T maxItem = default;
+            TCompare maxValue = default;
+            bool hasValues = false;
+
+            foreach (T item in sequence)
+            {
+                if (hasValues)
+                {
+                    TCompare value = selector(item);
+
+                    if (value.CompareTo(maxValue) > 0)
+                    {
+                        maxItem = item;
+                        maxValue = value;
+                    }
+                }
+                else
+                {
+                    maxItem = item;
+                    maxValue = selector(item);
+                    hasValues = true;
+                }
+            }
+
+            if (!hasValues) throw new InvalidOperationException("Sequence contains no elements");
+
+            return maxItem;
+        }
+        #endregion
+
         #region List Methods
         public static bool TryRemoveFast<T>(this IList<T> list, T value)
         {
