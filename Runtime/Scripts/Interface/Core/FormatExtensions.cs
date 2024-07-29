@@ -41,6 +41,7 @@ namespace Trackman
                 if (char.IsUpper(text[i]) && i != 0) builder.Append(" ");
                 builder.Append(text[i]);
             }
+
             return builder.ToString();
         }
         #endregion

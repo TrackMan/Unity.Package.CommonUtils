@@ -43,6 +43,7 @@ namespace Trackman
                 if (defaultValue is float floatValue) return (T)(object)UnityPrefs.GetFloat(GetFullPath(path), floatValue);
                 if (defaultValue is int intValue) return (T)(object)UnityPrefs.GetInt(GetFullPath(path), intValue);
                 if (defaultValue is string stringValue) return (T)(object)UnityPrefs.GetString(GetFullPath(path), stringValue);
+
                 if (defaultValue == null)
                 {
                     string stringVal = UnityPrefs.GetString(GetFullPath(path), "");
@@ -50,14 +51,17 @@ namespace Trackman
                     if (bool.TryParse(stringVal, out boolValue)) return (T)(object)boolValue;
                     if (int.TryParse(stringVal, out intValue)) return (T)(object)intValue;
                     if (float.TryParse(stringVal, out floatValue)) return (T)(object)floatValue;
+
                     return (T)(object)stringVal;
                 }
+
                 return DebugUtility.FromString<T>(UnityPrefs.GetString(GetFullPath(path), DebugUtility.GetString(defaultValue)));
             }
             catch (Exception exception)
             {
                 Debug.LogException(exception);
             }
+
             return defaultValue;
         }
         #endregion
@@ -103,6 +107,7 @@ namespace Trackman
         {
 #if UNITY_EDITOR
             if (!scene.IsValid()) throw new ArgumentException();
+
             UnityEditor.PackageManager.PackageInfo scenePackageInfo = UnityEditor.PackageManager.PackageInfo.FindForAssetPath(scene.path);
             ScopePrefix = scenePackageInfo?.displayName.Split('.')[^1] ?? Application.productName.Replace(" ", "");
 #else

@@ -6,7 +6,7 @@ namespace Trackman
     [DebuggerStepThrough]
     public abstract class InjectableSingleton<TClass, TInterface> : InjectSingleton<TClass, TInterface>, IMonoBehaviourInjectable where TClass : MonoBehaviour, TInterface where TInterface : ISingletonInjectable
     {
-         #region Methods
+        #region Methods
         protected override void OnEnable()
         {
             base.OnEnable();

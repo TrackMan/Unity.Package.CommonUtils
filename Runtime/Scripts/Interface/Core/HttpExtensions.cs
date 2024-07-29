@@ -88,6 +88,7 @@ namespace Trackman
                 string PrettyPrintBytes(byte[] bytes, IDictionary<string, string> headers)
                 {
                     if (bytes is null) return "null";
+
                     bool textContent = (headers is not null && headers.TryGetValue("Content-Type", out string value) && value.ToLower().Contains("application/json")) || (contentType.NotNullOrEmpty() && contentType.ToLower().Contains("application/json"));
                     return textContent && bytes.Length < saneDumpLength ? Encoding.UTF8.GetString(bytes) : $"<binary {bytes.Length} bytes>";
                 }
@@ -115,6 +116,7 @@ namespace Trackman
             string ByteSizeString(UnityWebRequest value)
             {
                 if (value.uploadedBytes == 0) return $"{value.downloadHandler.nativeData.Length.ToByteSize()}";
+
                 return $"{value.downloadHandler.nativeData.Length.ToByteSize()} {value.uploadedBytes.ToByteSize()}";
             }
 

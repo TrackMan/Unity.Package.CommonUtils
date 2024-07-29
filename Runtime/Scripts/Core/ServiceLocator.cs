@@ -41,6 +41,7 @@ namespace Trackman
 
             Type type = typeof(T);
             if (interfaceCache.TryGetValue(type, out Array monoBehaviours)) return (T[])monoBehaviours;
+
             interfaceCache.Add(type, monoCache.OfType<T>().ToArray());
 
             return (T[])interfaceCache[type];
@@ -55,6 +56,7 @@ namespace Trackman
 
             T[] results = FindInterfaces<T>();
             if (results.Length == 1) return results[0];
+
             throw new NotSupportedException($"{nameof(FindInterfaces)} found {results.Length} interfaces of type {type.FullName}");
         }
         #endregion

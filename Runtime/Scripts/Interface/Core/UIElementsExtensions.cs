@@ -10,7 +10,7 @@ namespace Trackman
     {
         #region Methods
         public static void AddRange(this VisualElement element, IEnumerable<VisualElement> elements) => elements.ForEach(x => element.Add(x));
-        
+
         public static void SetMargin(this IStyle style, float margin) => style.marginBottom = style.marginLeft = style.marginRight = style.marginTop = margin;
         public static void SetMarginVertical(this IStyle style, float margin) => style.marginLeft = style.marginRight = margin;
         public static void SetMarginHorizontal(this IStyle style, float margin) => style.marginLeft = style.marginRight = margin;

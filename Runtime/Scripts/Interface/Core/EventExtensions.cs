@@ -41,8 +41,8 @@ namespace Trackman
         #endregion
 
         #region Support Methods
-        static IEnumerable<T> FindEventsActive<T>(MonoBehaviour value) where T : IEvent => FindEvents<T>(value).Where(x => x is MonoBehaviour { isActiveAndEnabled: true});
-        static IEnumerable<T> FindEventsValid<T>(MonoBehaviour value) where T : IEvent => FindEvents<T>(value).Where(x => x.CanExecute && x is MonoBehaviour { isActiveAndEnabled: true});
+        static IEnumerable<T> FindEventsActive<T>(MonoBehaviour value) where T : IEvent => FindEvents<T>(value).Where(x => x is MonoBehaviour { isActiveAndEnabled: true });
+        static IEnumerable<T> FindEventsValid<T>(MonoBehaviour value) where T : IEvent => FindEvents<T>(value).Where(x => x.CanExecute && x is MonoBehaviour { isActiveAndEnabled: true });
         #endregion
     }
 }

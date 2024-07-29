@@ -4,7 +4,6 @@ using NUnit.Framework;
 
 namespace Trackman.CommonUtils.Tests.Editor
 {
-
     public class ExtensionsTest
     {
         #region Methods

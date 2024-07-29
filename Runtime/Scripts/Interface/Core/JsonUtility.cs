@@ -14,13 +14,9 @@ using System.Buffers;
 
 namespace Trackman
 {
-    public class JsonUtility : JsonUtilityShared<Generation>
-    {
-    }
+    public class JsonUtility : JsonUtilityShared<Generation> { }
 
-    public class Generation
-    {
-    }
+    public class Generation { }
 
     public class JsonUtilitySharedBase<Gen> // NOTE: Gen parameter allows all inheritors have separate static variables
     {
@@ -32,6 +28,7 @@ namespace Trackman
             {
                 Dictionary<string, U> dictionary = serializer.Deserialize<Dictionary<string, U>>(reader);
                 if (Schema.All(x => dictionary.ContainsKey(x.Key))) return ReadValue(dictionary);
+
                 return hasExistingValue ? existingValue : default;
             }
             public override void WriteJson(JsonWriter writer, T value, JsonSerializer serializer)
@@ -51,7 +48,10 @@ namespace Trackman
             protected override Color ReadValue(Dictionary<string, float> dictionary) => new(dictionary["r"], dictionary["g"], dictionary["b"], dictionary["a"]);
             protected override void WriteValue(Color value, Dictionary<string, float> dictionary)
             {
-                dictionary["r"] = value.r; dictionary["g"] = value.g; dictionary["b"] = value.b; dictionary["a"] = value.a;
+                dictionary["r"] = value.r;
+                dictionary["g"] = value.g;
+                dictionary["b"] = value.b;
+                dictionary["a"] = value.a;
             }
             protected override Dictionary<string, float> Schema { get; } = new() { { "r", 0 }, { "g", 0 }, { "b", 0 }, { "a", 0 } };
             #endregion
@@ -63,7 +63,8 @@ namespace Trackman
             protected override Vector2 ReadValue(Dictionary<string, float> dictionary) => new(dictionary["x"], dictionary["y"]);
             protected override void WriteValue(Vector2 value, Dictionary<string, float> dictionary)
             {
-                dictionary["x"] = value.x; dictionary["y"] = value.y;
+                dictionary["x"] = value.x;
+                dictionary["y"] = value.y;
             }
             protected override Dictionary<string, float> Schema { get; } = new() { { "x", 0 }, { "y", 0 } };
             #endregion
@@ -75,7 +76,8 @@ namespace Trackman
             protected override Vector2Int ReadValue(Dictionary<string, int> dictionary) => new(dictionary["x"], dictionary["y"]);
             protected override void WriteValue(Vector2Int value, Dictionary<string, int> dictionary)
             {
-                dictionary["x"] = value.x; dictionary["y"] = value.y;
+                dictionary["x"] = value.x;
+                dictionary["y"] = value.y;
             }
             protected override Dictionary<string, int> Schema { get; } = new() { { "x", 0 }, { "y", 0 } };
             #endregion
@@ -87,7 +89,9 @@ namespace Trackman
             protected override Vector3Int ReadValue(Dictionary<string, int> dictionary) => new(dictionary["x"], dictionary["y"], dictionary["z"]);
             protected override void WriteValue(Vector3Int value, Dictionary<string, int> dictionary)
             {
-                dictionary["x"] = value.x; dictionary["y"] = value.y; dictionary["z"] = value.z;
+                dictionary["x"] = value.x;
+                dictionary["y"] = value.y;
+                dictionary["z"] = value.z;
             }
             protected override Dictionary<string, int> Schema { get; } = new() { { "x", 0 }, { "y", 0 }, { "z", 0 } };
             #endregion
@@ -99,7 +103,9 @@ namespace Trackman
             protected override Vector3 ReadValue(Dictionary<string, float> dictionary) => new(dictionary["x"], dictionary["y"], dictionary["z"]);
             protected override void WriteValue(Vector3 value, Dictionary<string, float> dictionary)
             {
-                dictionary["x"] = value.x; dictionary["y"] = value.y; dictionary["z"] = value.z;
+                dictionary["x"] = value.x;
+                dictionary["y"] = value.y;
+                dictionary["z"] = value.z;
             }
             protected override Dictionary<string, float> Schema { get; } = new() { { "x", 0 }, { "y", 0 }, { "z", 0 } };
             #endregion
@@ -111,7 +117,10 @@ namespace Trackman
             protected override Vector4 ReadValue(Dictionary<string, float> dictionary) => new(dictionary["x"], dictionary["y"], dictionary["z"], dictionary["w"]);
             protected override void WriteValue(Vector4 value, Dictionary<string, float> dictionary)
             {
-                dictionary["x"] = value.x; dictionary["y"] = value.y; dictionary["z"] = value.z; dictionary["w"] = value.w;
+                dictionary["x"] = value.x;
+                dictionary["y"] = value.y;
+                dictionary["z"] = value.z;
+                dictionary["w"] = value.w;
             }
             protected override Dictionary<string, float> Schema { get; } = new() { { "x", 0 }, { "y", 0 }, { "z", 0 }, { "w", 0 } };
             #endregion
@@ -123,7 +132,10 @@ namespace Trackman
             protected override Quaternion ReadValue(Dictionary<string, float> dictionary) => new(dictionary["x"], dictionary["y"], dictionary["z"], dictionary["w"]);
             protected override void WriteValue(Quaternion value, Dictionary<string, float> dictionary)
             {
-                dictionary["x"] = value.x; dictionary["y"] = value.y; dictionary["z"] = value.z; dictionary["w"] = value.w;
+                dictionary["x"] = value.x;
+                dictionary["y"] = value.y;
+                dictionary["z"] = value.z;
+                dictionary["w"] = value.w;
             }
             protected override Dictionary<string, float> Schema { get; } = new() { { "x", 0 }, { "y", 0 }, { "z", 0 }, { "w", 0 } };
             #endregion
@@ -200,6 +212,7 @@ namespace Trackman
                         if (info.PropertyType.IsSubclassOf(typeof(Object)) && !info.PropertyType.IsSubclassOf(typeof(MonoBehaviour))) continue;
                         if (info.PropertyType.IsInterface) continue;
                         if (info.GetCustomAttribute<NonSerializedAttribute>() is not null) continue;
+
                         members.Add(info);
                     }
                 }
@@ -212,6 +225,7 @@ namespace Trackman
             protected override JsonProperty CreateProperty(MemberInfo member, MemberSerialization memberSerialization)
             {
                 if (member.MemberType == MemberTypes.Property && !member.DeclaringType.IsRecord()) return null;
+
                 return base.CreateProperty(member, memberSerialization);
             }
             #endregion
@@ -311,6 +325,7 @@ namespace Trackman
             {
                 jsonTextWriter.ArrayPool = arrayPool;
             }
+
             serializer.Serialize(jsonTextWriter, value);
             return stringWriter.ToString();
         }
@@ -344,6 +359,7 @@ namespace Trackman
             {
                 jsonTextReader.ArrayPool = arrayPool;
             }
+
             return serializer.Deserialize(jsonTextReader, type);
         }
         public static T FromJson<T>(string json, bool useArrayPool = true)
@@ -354,6 +370,7 @@ namespace Trackman
             {
                 jsonTextReader.ArrayPool = arrayPool;
             }
+
             return serializer.Deserialize<T>(jsonTextReader);
         }
 
@@ -473,11 +490,13 @@ namespace Trackman
                 if (Array.Exists(separators, x => x == text[i]))
                 {
                     yield return text.Substring(index, i - index);
+
                     index = i + 1;
                 }
                 else if (i == length - 1)
                 {
                     yield return text.Substring(index, i + 1 - index);
+
                     break;
                 }
             }
@@ -496,10 +515,12 @@ namespace Trackman
                     if (text[i] == '{') jsonDepth++;
                     if (text[i] == '}') jsonDepth--;
                 }
+
                 if (!inQuote && jsonDepth == 0)
                 {
                     if (text[i] == '[' || text[i] == ']') inArray = !inArray;
                 }
+
                 if (!inQuote && jsonDepth == 0 && !inArray)
                 {
                     if (Array.Exists(separators, x => x == text[i]))

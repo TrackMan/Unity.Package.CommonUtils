@@ -1,4 +1,3 @@
-
 namespace Trackman.Editor
 {
     public enum MenuOrder

@@ -15,7 +15,7 @@ namespace Trackman.Editor.Core
         [MenuItem("Trackman/Recompile all scripts %&r", false, (int)MenuOrder.Functions + 1)]
         public static void RecompileAllScripts() => CompilationPipeline.RequestScriptCompilation(RequestScriptCompilationOptions.CleanBuildCache);
 
-        [UsedImplicitly] 
+        [UsedImplicitly]
         public static void SyncSolution()
         {
             Debug.Log($"[{nameof(RecompileUtils)}] Starting solution sync...");

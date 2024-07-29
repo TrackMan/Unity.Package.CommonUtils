@@ -96,6 +96,7 @@ namespace Trackman
             foreach (T item in enumerable)
             {
                 if (item.Equals(value)) return index;
+
                 index++;
             }
 
@@ -107,6 +108,7 @@ namespace Trackman
             foreach (T item in enumerable)
             {
                 if (predicate(item)) return index;
+
                 index++;
             }
 
@@ -174,7 +176,7 @@ namespace Trackman
         }
         public static int ToDigit(this bool value) => value ? 1 : 0;
         public static int ToSign(this bool value) => value ? 1 : -1;
-        public static Vector3 ToVector3(this IReadOnlyList<float> value) => new (value[0], value[1], value[2]);
+        public static Vector3 ToVector3(this IReadOnlyList<float> value) => new(value[0], value[1], value[2]);
         public static Color ToColor(this string color) => ColorUtility.TryParseHtmlString(color, out Color result) ? result : throw new ArgumentException(nameof(color));
         public static string ToHexRGB(this Color color) => ColorUtility.ToHtmlStringRGB(color);
         // ReSharper disable once InconsistentNaming
@@ -220,6 +222,7 @@ namespace Trackman
         {
             int index = list.IndexOf(value);
             if (index < 0) return false;
+
             list.RemoveFast(index);
             return true;
         }

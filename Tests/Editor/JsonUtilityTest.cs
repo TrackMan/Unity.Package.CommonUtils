@@ -90,7 +90,7 @@ namespace Trackman.CommonUtils.Tests.Editor
             TestStruct result = JsonUtility.FromJson<TestStruct>(serializedTestStruct, true);
             Assert.AreEqual(testStruct.TestString, result.TestString);
             Assert.AreEqual(testStruct.TestInt, result.TestInt);
-        } 
+        }
         #endregion
     }
 }

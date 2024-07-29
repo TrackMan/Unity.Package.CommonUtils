@@ -14,17 +14,11 @@ namespace Trackman
         #endregion
     }
 
-    public interface IMonoBehaviourInjectable : IMonoBehaviour
-    {
-    }
+    public interface IMonoBehaviourInjectable : IMonoBehaviour { }
 
-    public interface IMonoBehaviourCollectionItem : IMonoBehaviour
-    {
-    }
+    public interface IMonoBehaviourCollectionItem : IMonoBehaviour { }
 
-    public interface ISingletonInjectable : IMonoBehaviour
-    {
-    }
+    public interface ISingletonInjectable : IMonoBehaviour { }
 
     public interface IClassName
     {
@@ -61,7 +55,6 @@ namespace Trackman
         bool CanExecute => true;
         #endregion
     }
-
 
     public interface ITimer
     {
@@ -123,6 +116,7 @@ namespace Trackman
         bool ChronoTriggerDefault()
         {
             if (!Started) return !Done;
+
             float dt = Time.deltaTime * Acceleration;
             if (Pause) dt = 0;
             if (Elapsed >= Duration)
@@ -146,6 +140,7 @@ namespace Trackman
             {
                 ElapsedValue += dt;
             }
+
             return !Done;
         }
         #endregion

@@ -1,4 +1,3 @@
-
 namespace Trackman
 {
     public class MonoBehaviourCollectionItem : MonoBehaviourInjectable, IMonoBehaviourCollectionItem
