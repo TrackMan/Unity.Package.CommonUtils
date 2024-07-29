@@ -139,7 +139,7 @@ namespace Trackman
         public static bool IsInsideXZ<T>(this Vector3 point, T points) where T : IReadOnlyList<Vector3>
         {
             bool inside = false;
-            for (int i = 0, length = points.Count, j = length - 1; i < length; j = ++i)
+            for (int i = 0, length = points.Count, j = length - 1; i < length; j = i++)
             {
                 Vector3 a = points[i];
                 Vector3 b = points[j];
