@@ -36,7 +36,7 @@ namespace Trackman
         public static string AddSpaces(this string text)
         {
             StringBuilder builder = new(text.Length);
-            for (int i = 0; i < text.Length; i++)
+            for (int i = 0; i < text.Length; ++i)
             {
                 if (char.IsUpper(text[i]) && i != 0) builder.Append(" ");
                 builder.Append(text[i]);

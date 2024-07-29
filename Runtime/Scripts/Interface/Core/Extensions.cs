@@ -139,7 +139,7 @@ namespace Trackman
         public static bool IsInsideXZ<T>(this Vector3 point, T points) where T : IReadOnlyList<Vector3>
         {
             bool inside = false;
-            for (int i = 0, length = points.Count, j = length - 1; i < length; j = i++)
+            for (int i = 0, length = points.Count, j = length - 1; i < length; j = ++i)
             {
                 Vector3 a = points[i];
                 Vector3 b = points[j];
@@ -151,7 +151,7 @@ namespace Trackman
         public static bool IsClockwise<T>(this T points) where T : IReadOnlyList<Vector3>
         {
             float sum = 0;
-            for (int i = 0, count = points.Count; i < count; i++)
+            for (int i = 0, count = points.Count; i < count; ++i)
             {
                 Vector3 v1 = points[i];
                 Vector3 v2 = points[(i + 1) % points.Count];
