@@ -56,6 +56,11 @@ namespace Trackman
             cacheList.AddFirst(newNode);
             cacheMap[key] = newNode;
         }
+        public void Clear()
+        {
+            cacheList.Clear();
+            cacheMap.Clear();
+        }
         #endregion
     }
 }
