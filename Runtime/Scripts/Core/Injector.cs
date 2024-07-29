@@ -10,9 +10,11 @@ namespace Trackman
 {
     public static class Injector
     {
+        const BindingFlags nonPublic = BindingFlags.NonPublic | BindingFlags.Instance;
+
         #region Containers
-        static readonly Dictionary<Type, PropertyInfo[]> typeInjectProperties = new();
-        static readonly Dictionary<Type, List<(PropertyInfo property, MonoBehaviour target)>> injectMonoBehaviours = new();
+        static readonly Dictionary<Type, PropertyInfo[]> injectTypeProperties = new();
+        static readonly Dictionary<Type, List<(PropertyInfo property, MonoBehaviour target)>> injectTargets = new();
         static readonly Dictionary<Type, MonoBehaviour> singletonInjectable = new();
         static readonly Dictionary<Type, IList> collections = new();
         #endregion
@@ -21,8 +23,8 @@ namespace Trackman
         static Injector() => DisposeStatic.OnDisposeStatic += Clear;
         static void Clear()
         {
-            typeInjectProperties.Clear();
-            injectMonoBehaviours.Clear();
+            injectTypeProperties.Clear();
+            injectTargets.Clear();
             singletonInjectable.Clear();
             collections.Clear();
         }
@@ -36,7 +38,11 @@ namespace Trackman
             void UpdateCollections()
             {
                 foreach ((Type type, IList collection) in collections)
-                    UpdateCollection(type, collection);
+                {
+                    collection.Clear();
+                    foreach (Object value in Object.FindObjectsByType(type, FindObjectsSortMode.None))
+                        collection.Add(value);
+                }
             }
 
             if (!Application.isPlaying)
@@ -49,107 +55,111 @@ namespace Trackman
         #region Methods
         public static void Register<TClass, TInterface>(this TClass value) where TClass : MonoBehaviour, TInterface where TInterface : ISingletonInjectable
         {
-            Type monoType = typeof(TInterface);
-            if (!singletonInjectable.TryGetValue(monoType, out MonoBehaviour singletonMono))
-                singletonInjectable.Add(monoType, singletonMono = value.MonoBehavior);
+            static void AddType(Type type, MonoBehaviour target)
+            {
+                if (!singletonInjectable.TryGetValue(type, out MonoBehaviour singletonMono))
+                    singletonInjectable.Add(type, singletonMono = target);
 
-            if (!injectMonoBehaviours.TryGetValue(monoType, out List<(PropertyInfo property, MonoBehaviour target)> targets)) return;
-            foreach ((PropertyInfo property, MonoBehaviour monoBehaviour) in targets)
-                property.SetValue(monoBehaviour, singletonMono);
+                if (injectTargets.TryGetValue(type, out List<(PropertyInfo property, MonoBehaviour target)> targets))
+                    foreach ((PropertyInfo property, MonoBehaviour monoBehaviour) in targets)
+                        property.SetValue(monoBehaviour, singletonMono);
+            }
+
+            Type classType = typeof(TClass);
+            Type interfaceType = typeof(TInterface);
+
+            AddType(classType, value.MonoBehavior);
+            AddType(interfaceType, value.MonoBehavior);
         }
         public static void Unregister<TClass, TInterface>(this TClass value) where TClass : MonoBehaviour, TInterface where TInterface : ISingletonInjectable
         {
-            Type monoType = typeof(TInterface);
-            if (singletonInjectable.ContainsKey(monoType))
-                singletonInjectable.Remove(monoType);
-
-            if (!injectMonoBehaviours.TryGetValue(monoType, out List<(PropertyInfo property, MonoBehaviour target)> targets)) return;
-            foreach ((PropertyInfo property, MonoBehaviour monoBehaviour) in targets)
-                property.SetValue(monoBehaviour, null);
-        }
-        public static void Inject<T>(this T value) where T : MonoBehaviour, IMonoBehaviourInjectable
-        {
-            Type monoType = value.GetType();
-            if (!typeInjectProperties.TryGetValue(monoType, out PropertyInfo[] properties))
-                typeInjectProperties[monoType] = properties = monoType.GetProperties(BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static).Where(x => x.GetCustomAttribute<InjectAttribute>() is not null).ToArray();
-
-            foreach (PropertyInfo property in properties)
+            static void RemoveType(Type type)
             {
-                (PropertyInfo property, MonoBehaviour target) valueTuple = (property, value);
-                if (injectMonoBehaviours.TryGetValue(property.PropertyType, out List<(PropertyInfo property, MonoBehaviour target)> targets))
+                if (singletonInjectable.ContainsKey(type))
+                    singletonInjectable.Remove(type);
+
+                if (injectTargets.TryGetValue(type, out List<(PropertyInfo property, MonoBehaviour target)> targets))
+                    foreach ((PropertyInfo property, MonoBehaviour monoBehaviour) in targets)
+                        property.SetValue(monoBehaviour, default);
+            }
+
+            Type classType = typeof(TClass);
+            Type interfaceType = typeof(TInterface);
+
+            RemoveType(classType);
+            RemoveType(interfaceType);
+        }
+        public static void Inject<T>(this T mono) where T : MonoBehaviour, IMonoBehaviourInjectable
+        {
+            void EnsureTargets(PropertyInfo property, MonoBehaviour target)
+            {
+                (PropertyInfo property, MonoBehaviour target) value = (property, target);
+
+                if (injectTargets.TryGetValue(property.PropertyType, out List<(PropertyInfo property, MonoBehaviour target)> targets))
                 {
-                    if (!targets.Contains(valueTuple))
-                        targets.Add(valueTuple);
+                    if (!targets.Contains(value)) targets.Add(value);
                 }
                 else
                 {
-                    injectMonoBehaviours.Add(property.PropertyType, new List<(PropertyInfo property, MonoBehaviour target)> { valueTuple });
+                    injectTargets.Add(property.PropertyType, new List<(PropertyInfo property, MonoBehaviour target)> { value });
                 }
-
+            }
+            void InjectSingleton(PropertyInfo property)
+            {
                 if (singletonInjectable.TryGetValue(property.PropertyType, out MonoBehaviour singletonMono))
-                {
-                    property.SetValue(value, singletonMono);
-                }
-#if UNITY_EDITOR
-                else if (!Application.isPlaying) // attempt to find a singleton in editor
-                {
-                    singletonMono = Object.FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None).FirstOrDefault(x => property.PropertyType.IsInstanceOfType(x));
-                    if (singletonMono) property.SetValue(value, singletonMono);
-                }
-#endif
+                    property.SetValue(mono, singletonMono);
+            }
+            void InjectCollection(PropertyInfo property)
+            {
+                Type[] arguments = property.PropertyType.GetGenericArguments();
+                if (arguments.Length == 0) return;
+
+                Type elementType = arguments[0];
+
+                if (!collections.TryGetValue(elementType, out IList collection))
+                    collections.Add(elementType, collection = (IList)Activator.CreateInstance(typeof(List<>).MakeGenericType(elementType)));
+
+                property.SetValue(mono, collection);
+            }
+
+            Type monoType = mono.GetType();
+            if (!injectTypeProperties.TryGetValue(monoType, out PropertyInfo[] properties))
+                injectTypeProperties[monoType] = properties = monoType.GetProperties(nonPublic).Where(x => x.GetCustomAttribute<InjectAttribute>() is not null).ToArray();
+
+            foreach (PropertyInfo property in properties)
+            {
+                EnsureTargets(property, mono);
+                if (typeof(ISingletonInjectable).IsAssignableFrom(property.PropertyType)) InjectSingleton(property);
+                if (typeof(IEnumerable).IsAssignableFrom(property.PropertyType)) InjectCollection(property);
             }
         }
         public static void Eject<T>(this T mono) where T : MonoBehaviour, IMonoBehaviourInjectable
         {
             Type monoType = mono.GetType();
-            if (injectMonoBehaviours.TryGetValue(monoType, out List<(PropertyInfo property, MonoBehaviour target)> behaviour))
-                behaviour.RemoveAll(x => x.target == mono);
+            if (injectTargets.TryGetValue(monoType, out List<(PropertyInfo property, MonoBehaviour target)> targets))
+                targets.RemoveAll(x => x.target == mono);
         }
         public static void Add<T>(this T mono) where T : MonoBehaviour, IMonoBehaviourCollectionItem
         {
             Type monoType = mono.GetType();
-            if (collections.TryGetValue(monoType, out IList value))
+            if (collections.TryGetValue(monoType, out IList collection))
             {
-                if (value.Contains(mono)) return;
+                if (collection.Contains(mono)) return;
             }
             else
             {
-                value = (IList)Activator.CreateInstance(typeof(List<>).MakeGenericType(monoType));
-                collections.Add(monoType, value);
+                collection = (IList)Activator.CreateInstance(typeof(List<>).MakeGenericType(monoType));
+                collections.Add(monoType, collection);
             }
 
-            value.Add(mono);
+            collection.Add(mono);
         }
         public static void Remove<T>(this T mono) where T : MonoBehaviour, IMonoBehaviourCollectionItem
         {
             Type monoType = mono.GetType();
-            if (collections.TryGetValue(monoType, out IList value) && value is List<T> list)
-                list.Remove(mono);
+            if (collections.TryGetValue(monoType, out IList value) && value is List<T> collection)
+                collection.Remove(mono);
         }
-        public static IReadOnlyList<T> GetCollection<T>() where T : MonoBehaviour, IMonoBehaviourCollectionItem
-        {
-            Type monoType = typeof(T);
-            if (!collections.TryGetValue(monoType, out IList value))
-            {
-                collections.Add(monoType, value = new List<T>());
-#if UNITY_EDITOR
-                if (!Application.isPlaying)
-                    UpdateCollection(monoType, value);
-#endif
-            }
-            return (IReadOnlyList<T>)value;
-        }
-        #endregion
-
-        #region Support Methods
-#if UNITY_EDITOR
-        static void UpdateCollection(Type type, IList collection)
-        {
-            collection.Clear();
-            foreach (Object value in Object.FindObjectsByType(type, FindObjectsSortMode.None))
-                collection.Add(value);
-        }
-#endif
         #endregion
     }
 }
