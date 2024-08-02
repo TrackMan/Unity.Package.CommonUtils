@@ -70,7 +70,13 @@ namespace Trackman
         public static IEnumerable<(T item, int index)> Indexed<T>(this IEnumerable<T> enumerable) => enumerable.Select((item, index) => (item, index));
         public static void ForEach<T>(this IEnumerable<T> enumerable, Action<T> action)
         {
-            foreach (T element in enumerable) action(element);
+            foreach (T element in enumerable)
+                action(element);
+        }
+        public static void ForEach<T>(this IReadOnlyList<T> enumerable, Action<T> action)
+        {
+            foreach (T element in enumerable)
+                action(element);
         }
         public static void ForEachSafe<T>(this IEnumerable<T> enumerable, Action<T> action)
         {
@@ -88,7 +94,8 @@ namespace Trackman
         }
         public static void ForEach<T, TArg>(this IEnumerable<T> enumerable, Action<T, TArg> action, TArg argument)
         {
-            foreach (T element in enumerable) action(element, argument);
+            foreach (T element in enumerable)
+                action(element, argument);
         }
         public static int IndexOf<T>(this IEnumerable<T> enumerable, T value)
         {
