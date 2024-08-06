@@ -252,7 +252,7 @@ namespace Trackman
             settings.Converters.Add(new QuaternionConverter());
             settings.Converters.Add(new StringEnumConverter());
             settings.NullValueHandling = NullValueHandling.Ignore;
-            settings.ContractResolver = new IgnorePropertiesContractResolver() { IgnoreSerializableAttribute = false, IgnoreShouldSerializeMembers = false };
+            settings.ContractResolver = new IgnorePropertiesContractResolver { IgnoreSerializableAttribute = false, IgnoreShouldSerializeMembers = false };
             serializer = JsonSerializer.Create(settings);
         }
         #endregion
