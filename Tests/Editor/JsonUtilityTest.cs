@@ -73,7 +73,7 @@ namespace Trackman.CommonUtils.Tests.Editor
         [Test]
         public void TestFromJsonStringWithUseArrayPool()
         {
-            TestStruct result = (TestStruct)JsonUtility.FromJson(serializedTestStruct, typeof(TestStruct), true);
+            TestStruct result = (TestStruct)JsonUtility.FromJson(serializedTestStruct, typeof(TestStruct));
             Assert.AreEqual(testStruct.TestString, result.TestString);
             Assert.AreEqual(testStruct.TestInt, result.TestInt);
         }
@@ -87,7 +87,7 @@ namespace Trackman.CommonUtils.Tests.Editor
         [Test]
         public void TestFromJsonStringWithTypeTAndUseArrayPool()
         {
-            TestStruct result = JsonUtility.FromJson<TestStruct>(serializedTestStruct, true);
+            TestStruct result = JsonUtility.FromJson<TestStruct>(serializedTestStruct);
             Assert.AreEqual(testStruct.TestString, result.TestString);
             Assert.AreEqual(testStruct.TestInt, result.TestInt);
         }
