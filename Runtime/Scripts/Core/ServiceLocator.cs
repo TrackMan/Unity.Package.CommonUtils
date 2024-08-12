@@ -57,7 +57,7 @@ namespace Trackman
             T[] results = FindInterfaces<T>();
             if (results.Length == 1) return results[0];
 
-            throw new NotSupportedException($"{nameof(FindInterfaces)} found {results.Length} interfaces of type {type.FullName}");
+            throw new NotSupportedException($"{nameof(FindInterfaces)} found {results.Length} interfaces of type {type.FullName}:\n{string.Join('\n', results.Select(x => x.GetType().Name))}" );
         }
         #endregion
 
