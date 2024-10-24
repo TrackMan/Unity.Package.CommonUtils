@@ -14,10 +14,25 @@ using System.Buffers;
 
 namespace Trackman
 {
+    using static ConstNames;
+    
     public class JsonUtility : JsonUtilityShared<Generation> { }
 
     public class Generation { }
 
+    public static class ConstNames
+    {
+        public const string r = nameof(r);
+        public const string g = nameof(g);
+        public const string b = nameof(b);
+        public const string a = nameof(a);
+        
+        public const string x = nameof(x);
+        public const string y = nameof(y);
+        public const string z = nameof(z);
+        public const string w = nameof(w);
+    }
+    
     public class JsonUtilitySharedBase<Gen> // NOTE: Gen parameter allows all inheritors have separate static variables
     {
         #region Containers
@@ -45,99 +60,99 @@ namespace Trackman
         protected class ColorConverter : VectorConverter<Color, float>
         {
             #region Methods
-            protected override Color ReadValue(Dictionary<string, float> dictionary) => new(dictionary["r"], dictionary["g"], dictionary["b"], dictionary["a"]);
+            protected override Color ReadValue(Dictionary<string, float> dictionary) => new(dictionary[r], dictionary[g], dictionary[b], dictionary[a]);
             protected override void WriteValue(Color value, Dictionary<string, float> dictionary)
             {
-                dictionary["r"] = value.r;
-                dictionary["g"] = value.g;
-                dictionary["b"] = value.b;
-                dictionary["a"] = value.a;
+                dictionary[r] = value.r;
+                dictionary[g] = value.g;
+                dictionary[b] = value.b;
+                dictionary[a] = value.a;
             }
-            protected override Dictionary<string, float> Schema { get; } = new() { { "r", 0 }, { "g", 0 }, { "b", 0 }, { "a", 0 } };
+            protected override Dictionary<string, float> Schema { get; } = new() { { r, 0 }, { g, 0 }, { b, 0 }, { a, 0 } };
             #endregion
         }
 
         protected class Vector2Converter : VectorConverter<Vector2, float>
         {
             #region Methods
-            protected override Vector2 ReadValue(Dictionary<string, float> dictionary) => new(dictionary["x"], dictionary["y"]);
+            protected override Vector2 ReadValue(Dictionary<string, float> dictionary) => new(dictionary[x], dictionary[y]);
             protected override void WriteValue(Vector2 value, Dictionary<string, float> dictionary)
             {
-                dictionary["x"] = value.x;
-                dictionary["y"] = value.y;
+                dictionary[x] = value.x;
+                dictionary[y] = value.y;
             }
-            protected override Dictionary<string, float> Schema { get; } = new() { { "x", 0 }, { "y", 0 } };
+            protected override Dictionary<string, float> Schema { get; } = new() { { x, 0 }, { y, 0 } };
             #endregion
         }
 
         protected class Vector2IntConverter : VectorConverter<Vector2Int, int>
         {
             #region Methods
-            protected override Vector2Int ReadValue(Dictionary<string, int> dictionary) => new(dictionary["x"], dictionary["y"]);
+            protected override Vector2Int ReadValue(Dictionary<string, int> dictionary) => new(dictionary[x], dictionary[y]);
             protected override void WriteValue(Vector2Int value, Dictionary<string, int> dictionary)
             {
-                dictionary["x"] = value.x;
-                dictionary["y"] = value.y;
+                dictionary[x] = value.x;
+                dictionary[y] = value.y;
             }
-            protected override Dictionary<string, int> Schema { get; } = new() { { "x", 0 }, { "y", 0 } };
+            protected override Dictionary<string, int> Schema { get; } = new() { { x, 0 }, { y, 0 } };
             #endregion
         }
 
         protected class Vector3IntConverter : VectorConverter<Vector3Int, int>
         {
             #region Methods
-            protected override Vector3Int ReadValue(Dictionary<string, int> dictionary) => new(dictionary["x"], dictionary["y"], dictionary["z"]);
+            protected override Vector3Int ReadValue(Dictionary<string, int> dictionary) => new(dictionary[x], dictionary[y], dictionary[z]);
             protected override void WriteValue(Vector3Int value, Dictionary<string, int> dictionary)
             {
-                dictionary["x"] = value.x;
-                dictionary["y"] = value.y;
-                dictionary["z"] = value.z;
+                dictionary[x] = value.x;
+                dictionary[y] = value.y;
+                dictionary[z] = value.z;
             }
-            protected override Dictionary<string, int> Schema { get; } = new() { { "x", 0 }, { "y", 0 }, { "z", 0 } };
+            protected override Dictionary<string, int> Schema { get; } = new() { { x, 0 }, { y, 0 }, { z, 0 } };
             #endregion
         }
 
         protected class Vector3Converter : VectorConverter<Vector3, float>
         {
             #region Methods
-            protected override Vector3 ReadValue(Dictionary<string, float> dictionary) => new(dictionary["x"], dictionary["y"], dictionary["z"]);
+            protected override Vector3 ReadValue(Dictionary<string, float> dictionary) => new(dictionary[x], dictionary[y], dictionary[z]);
             protected override void WriteValue(Vector3 value, Dictionary<string, float> dictionary)
             {
-                dictionary["x"] = value.x;
-                dictionary["y"] = value.y;
-                dictionary["z"] = value.z;
+                dictionary[x] = value.x;
+                dictionary[y] = value.y;
+                dictionary[z] = value.z;
             }
-            protected override Dictionary<string, float> Schema { get; } = new() { { "x", 0 }, { "y", 0 }, { "z", 0 } };
+            protected override Dictionary<string, float> Schema { get; } = new() { { x, 0 }, { y, 0 }, { z, 0 } };
             #endregion
         }
 
         protected class Vector4Converter : VectorConverter<Vector4, float>
         {
             #region Methods
-            protected override Vector4 ReadValue(Dictionary<string, float> dictionary) => new(dictionary["x"], dictionary["y"], dictionary["z"], dictionary["w"]);
+            protected override Vector4 ReadValue(Dictionary<string, float> dictionary) => new(dictionary[x], dictionary[y], dictionary[z], dictionary[w]);
             protected override void WriteValue(Vector4 value, Dictionary<string, float> dictionary)
             {
-                dictionary["x"] = value.x;
-                dictionary["y"] = value.y;
-                dictionary["z"] = value.z;
-                dictionary["w"] = value.w;
+                dictionary[x] = value.x;
+                dictionary[y] = value.y;
+                dictionary[z] = value.z;
+                dictionary[w] = value.w;
             }
-            protected override Dictionary<string, float> Schema { get; } = new() { { "x", 0 }, { "y", 0 }, { "z", 0 }, { "w", 0 } };
+            protected override Dictionary<string, float> Schema { get; } = new() { { x, 0 }, { y, 0 }, { z, 0 }, { w, 0 } };
             #endregion
         }
 
         protected class QuaternionConverter : VectorConverter<Quaternion, float>
         {
             #region Methods
-            protected override Quaternion ReadValue(Dictionary<string, float> dictionary) => new(dictionary["x"], dictionary["y"], dictionary["z"], dictionary["w"]);
+            protected override Quaternion ReadValue(Dictionary<string, float> dictionary) => new(dictionary[x], dictionary[y], dictionary[z], dictionary[w]);
             protected override void WriteValue(Quaternion value, Dictionary<string, float> dictionary)
             {
-                dictionary["x"] = value.x;
-                dictionary["y"] = value.y;
-                dictionary["z"] = value.z;
-                dictionary["w"] = value.w;
+                dictionary[x] = value.x;
+                dictionary[y] = value.y;
+                dictionary[z] = value.z;
+                dictionary[w] = value.w;
             }
-            protected override Dictionary<string, float> Schema { get; } = new() { { "x", 0 }, { "y", 0 }, { "z", 0 }, { "w", 0 } };
+            protected override Dictionary<string, float> Schema { get; } = new() { { x, 0 }, { y, 0 }, { z, 0 }, { w, 0 } };
             #endregion
         }
 
