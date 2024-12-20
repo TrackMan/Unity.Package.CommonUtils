@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Threading.Tasks;
 using System.Linq;
 using UnityEngine;
 using Debug = UnityEngine.Debug;
@@ -285,6 +286,21 @@ namespace Trackman
                 (list[k], list[n]) = (list[n], list[k]);
             }
         }
+        #endregion
+
+        #region Task Extensions
+        public static async void FireAndForget(this Task task)
+        {
+            try
+            {
+                await task;
+            }
+            catch (Exception e)
+            {
+                Debug.LogException(e);
+            }
+        }
+        public static Task ContinueWithResult<T>(this Task<T> task, Action<T> action) => task.ContinueWith(x => action(x.Result));
         #endregion
     }
 }
