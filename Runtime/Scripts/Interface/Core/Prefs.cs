@@ -26,36 +26,36 @@ namespace Trackman
         #endregion
 
         #region Methods
-        public bool Contains(string path) => UnityPrefs.HasKey(GetFullPath(path));
+        public bool Contains(string path) => PrefsBackend.Current.HasKey(GetFullPath(path));
         public void Write(string path, object value)
         {
-            if (value is bool boolValue) UnityPrefs.SetInt(GetFullPath(path), boolValue ? 1 : 0);
-            else if (value is float floatValue) UnityPrefs.SetFloat(GetFullPath(path), floatValue);
-            else if (value is int intValue) UnityPrefs.SetInt(GetFullPath(path), intValue);
-            else if (value is string stringValue) UnityPrefs.SetString(GetFullPath(path), stringValue);
-            else UnityPrefs.SetString(GetFullPath(path), DebugUtility.GetString(value));
+            if (value is bool boolValue) PrefsBackend.Current.SetInt(GetFullPath(path), boolValue ? 1 : 0);
+            else if (value is float floatValue) PrefsBackend.Current.SetFloat(GetFullPath(path), floatValue);
+            else if (value is int intValue) PrefsBackend.Current.SetInt(GetFullPath(path), intValue);
+            else if (value is string stringValue) PrefsBackend.Current.SetString(GetFullPath(path), stringValue);
+            else PrefsBackend.Current.SetString(GetFullPath(path), DebugUtility.GetString(value));
         }
         public T Read<T>(string path, T defaultValue)
         {
             try
             {
-                if (defaultValue is bool boolValue) return (T)(object)(UnityPrefs.GetInt(GetFullPath(path), boolValue ? 1 : 0) == 1);
-                if (defaultValue is float floatValue) return (T)(object)UnityPrefs.GetFloat(GetFullPath(path), floatValue);
-                if (defaultValue is int intValue) return (T)(object)UnityPrefs.GetInt(GetFullPath(path), intValue);
-                if (defaultValue is string stringValue) return (T)(object)UnityPrefs.GetString(GetFullPath(path), stringValue);
+                if (defaultValue is bool boolValue) return (T) (object) (PrefsBackend.Current.GetInt(GetFullPath(path), boolValue ? 1 : 0) == 1);
+                if (defaultValue is float floatValue) return (T) (object) PrefsBackend.Current.GetFloat(GetFullPath(path), floatValue);
+                if (defaultValue is int intValue) return (T) (object) PrefsBackend.Current.GetInt(GetFullPath(path), intValue);
+                if (defaultValue is string stringValue) return (T) (object) PrefsBackend.Current.GetString(GetFullPath(path), stringValue);
 
                 if (defaultValue == null)
                 {
-                    string stringVal = UnityPrefs.GetString(GetFullPath(path), "");
+                    string stringVal = PrefsBackend.Current.GetString(GetFullPath(path), "");
                     if (stringVal.NullOrEmpty()) return default;
-                    if (bool.TryParse(stringVal, out boolValue)) return (T)(object)boolValue;
-                    if (int.TryParse(stringVal, out intValue)) return (T)(object)intValue;
-                    if (float.TryParse(stringVal, out floatValue)) return (T)(object)floatValue;
+                    if (bool.TryParse(stringVal, out boolValue)) return (T) (object) boolValue;
+                    if (int.TryParse(stringVal, out intValue)) return (T) (object) intValue;
+                    if (float.TryParse(stringVal, out floatValue)) return (T) (object) floatValue;
 
-                    return (T)(object)stringVal;
+                    return (T) (object) stringVal;
                 }
 
-                return DebugUtility.FromString<T>(UnityPrefs.GetString(GetFullPath(path), DebugUtility.GetString(defaultValue)));
+                return DebugUtility.FromString<T>(PrefsBackend.Current.GetString(GetFullPath(path), DebugUtility.GetString(defaultValue)));
             }
             catch (Exception exception)
             {
@@ -72,7 +72,7 @@ namespace Trackman
         public bool Remove(string key)
         {
             bool contains = Contains(key);
-            if (contains) UnityPrefs.DeleteKey(GetFullPath(key));
+            if (contains) PrefsBackend.Current.DeleteKey(GetFullPath(key));
             return contains;
         }
         bool IDictionary<string, object>.TryGetValue(string key, out object value)
@@ -153,6 +153,64 @@ namespace Trackman
     {
         #region Properties
         protected override string ScopePrefix => "Shared";
+        #endregion
+    }
+
+    /// <summary>
+    /// Implements the same methods as <see cref="PlayerPrefs"/>
+    /// </summary>
+    public abstract class PrefsBackend
+    {
+        #region Properties
+        public static PrefsBackend Current => Custom ?? real;
+        public static PrefsBackend Custom { get; set; }
+        static PrefsBackend real = new PrefsBackendReal();
+        #endregion
+
+        #region Methods
+        public abstract bool HasKey(string path);
+        public abstract void SetInt(string path, int value);
+        public abstract int GetInt(string path, int defaultValue);
+        public abstract void SetFloat(string path, float value);
+        public abstract float GetFloat(string path, float defaultValue);
+        public abstract void SetString(string path, string value);
+        public abstract string GetString(string path, string defaultValue);
+        public abstract void DeleteKey(string path);
+        public abstract void DeleteAll();
+        #endregion
+    }
+
+    public class PrefsBackendReal : PrefsBackend
+    {
+        #region Methods
+        public override bool HasKey(string path) => UnityPrefs.HasKey(path);
+        public override void SetInt(string path, int value) => UnityPrefs.SetInt(path, value);
+        public override int GetInt(string path, int defaultValue) => UnityPrefs.GetInt(path, defaultValue);
+        public override void SetFloat(string path, float value) => UnityPrefs.SetFloat(path, value);
+        public override float GetFloat(string path, float defaultValue) => UnityPrefs.GetFloat(path, defaultValue);
+        public override void SetString(string path, string value) => UnityPrefs.SetString(path, value);
+        public override string GetString(string path, string defaultValue) => UnityPrefs.GetString(path, defaultValue);
+        public override void DeleteKey(string path) => UnityPrefs.DeleteKey(path);
+        public override void DeleteAll() => UnityPrefs.DeleteAll();
+        #endregion
+    }
+
+    public class PrefsBackendInMemory : PrefsBackend
+    {
+        #region Fields
+        readonly Dictionary<string, object> data = new();
+        #endregion
+
+        #region Methods
+        public override bool HasKey(string path) => data.ContainsKey(path);
+        public override void SetInt(string path, int value) => data[path] = value;
+        public override int GetInt(string path, int defaultValue) => data.TryGetValue(path, out object value) ? (int) value : defaultValue;
+        public override void SetFloat(string path, float value) => data[path] = value;
+        public override float GetFloat(string path, float defaultValue) => data.TryGetValue(path, out object value) ? (float) value : defaultValue;
+        public override void SetString(string path, string value) => data[path] = value;
+        public override string GetString(string path, string defaultValue) => data.TryGetValue(path, out object value) ? (string) value : defaultValue;
+        public override void DeleteKey(string path) => data.Remove(path);
+        public override void DeleteAll() => data.Clear();
         #endregion
     }
 }
