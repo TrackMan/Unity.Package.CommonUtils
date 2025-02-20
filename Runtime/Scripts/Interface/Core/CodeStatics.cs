@@ -7,5 +7,7 @@
 #else
         public static bool IncludeTests => false;
 #endif
+
+        public static bool IsRunningTests { get; set; }
     }
 }
