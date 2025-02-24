@@ -116,8 +116,17 @@ namespace Trackman
 
                 Type elementType = arguments[0];
 
-                if (!collections.TryGetValue(elementType, out IList collection))
+                if (collections.TryGetValue(elementType, out IList collection))
+                {
+                }
+                else if (elementType.IsInterface && collections.FirstOrDefault(x => elementType.IsAssignableFrom(x.Key)) is { } keyValuePair)
+                {
+                    collection = keyValuePair.Value;
+                }
+                else
+                {
                     collections.Add(elementType, collection = (IList)Activator.CreateInstance(typeof(List<>).MakeGenericType(elementType)));
+                }
 
                 property.SetValue(mono, collection);
             }
