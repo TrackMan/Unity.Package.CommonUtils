@@ -106,8 +106,15 @@ namespace Trackman
             }
             void InjectSingleton(PropertyInfo property)
             {
-                if (singletonInjectable.TryGetValue(property.PropertyType, out MonoBehaviour singletonMono))
-                    property.SetValue(mono, singletonMono);
+                if (singletonInjectable.TryGetValue(property.PropertyType, out MonoBehaviour singletonMono)) property.SetValue(mono, singletonMono);
+                else
+                {
+                    if (typeof(MonoBehaviour).IsAssignableFrom(property.PropertyType)) // Attempt to find singleton instance for OnEnable
+                    {
+                        MonoBehaviour firstSingleton = (MonoBehaviour)MonoBehaviour.FindFirstObjectByType(property.PropertyType);
+                        if (firstSingleton) property.SetValue(mono, firstSingleton);
+                    }
+                }
             }
             void InjectCollection(PropertyInfo property)
             {
