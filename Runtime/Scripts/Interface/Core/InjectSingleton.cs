@@ -1,6 +1,5 @@
 using System.Diagnostics;
 using UnityEngine;
-using Debug = UnityEngine.Debug;
 
 namespace Trackman
 {
@@ -20,7 +19,6 @@ namespace Trackman
                 if (instance) return instance;
 
                 TClass newInstance = FindAnyObjectByType<TClass>(FindObjectsInactive.Exclude);
-                Debug.Log(newInstance);
                 if (newInstance && newInstance.enabled) return instance = newInstance;
 
                 return default;
