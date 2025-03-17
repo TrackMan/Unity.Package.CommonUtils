@@ -40,8 +40,17 @@ namespace Trackman
                 foreach ((Type type, IList collection) in collections)
                 {
                     collection.Clear();
-                    foreach (Object value in Object.FindObjectsByType(type, FindObjectsSortMode.None))
-                        collection.Add(value);
+                    if (type.IsInterface)
+                    {
+                        foreach (MonoBehaviour value in Object.FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None))
+                            if (type.IsAssignableFrom(value.GetType()))
+                                collection.Add(value);
+                    }
+                    else
+                    {
+                        foreach (Object value in Object.FindObjectsByType(type, FindObjectsSortMode.None))
+                            collection.Add(value);
+                    }
                 }
             }
 
@@ -126,7 +135,7 @@ namespace Trackman
                 if (collections.TryGetValue(elementType, out IList collection))
                 {
                 }
-                else if (elementType.IsInterface && collections.FirstOrDefault(x => elementType.IsAssignableFrom(x.Key)) is { } keyValuePair)
+                else if (elementType.IsInterface && collections.FirstOrDefault(x => elementType.IsAssignableFrom(x.Key)) is { Key: not null, Value: not null } keyValuePair)
                 {
                     collection = keyValuePair.Value;
                 }
