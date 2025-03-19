@@ -1,4 +1,6 @@
-﻿namespace Trackman
+﻿using System;
+
+namespace Trackman
 {
     public static class CodeStatics
     {
@@ -17,5 +19,7 @@
         public static bool IsRunningTests { get; set; }
 
         public static bool SkipVerboseLogs => IsRunningTests && !VerboseTestsLogging;
+
+        public static bool IsRunningOnCI => !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("AGENT_VERSION"));
     }
 }

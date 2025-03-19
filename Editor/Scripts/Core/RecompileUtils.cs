@@ -14,6 +14,8 @@ namespace Trackman.Editor.Core
         public static void RecompileScripts() => CompilationPipeline.RequestScriptCompilation();
         [MenuItem("Trackman/Recompile all scripts", false, (int)MenuOrder.Functions + 1)]
         public static void RecompileAllScripts() => CompilationPipeline.RequestScriptCompilation(RequestScriptCompilationOptions.CleanBuildCache);
+        [MenuItem("Trackman/Unlock assemblies reload", false, (int)MenuOrder.Functions + 2)]
+        public static void UnlockAssembliesReload() => EditorApplication.UnlockReloadAssemblies();
 
         [UsedImplicitly]
         public static void SyncSolution()
