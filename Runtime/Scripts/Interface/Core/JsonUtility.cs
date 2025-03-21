@@ -1,21 +1,21 @@
+using System;
+using System.Buffers;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Reflection;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
-using System.Linq;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Reflection;
 using UnityEngine;
 using Object = UnityEngine.Object;
 using Converter = System.Convert;
-using System.Buffers;
 
 namespace Trackman
 {
     using static ConstNames;
-    
+
     public class JsonUtility : JsonUtilityShared<Generation> { }
 
     public class Generation { }
@@ -26,14 +26,14 @@ namespace Trackman
         public const string g = nameof(g);
         public const string b = nameof(b);
         public const string a = nameof(a);
-        
+
         public const string x = nameof(x);
         public const string y = nameof(y);
         public const string z = nameof(z);
         public const string w = nameof(w);
     }
-    
-    public class JsonUtilitySharedBase<Gen> // NOTE: Gen parameter allows all inheritors have separate static variables
+
+    public class JsonUtilitySharedBase<TGen> // NOTE: Gen parameter allows all inheritors have separate static variables
     {
         #region Containers
         protected abstract class VectorConverter<T, U> : JsonConverter<T>
@@ -163,26 +163,17 @@ namespace Trackman
             #endregion
 
             #region Constructors
-            public IgnoreTypesConverter(params Type[] types)
-            {
-                this.types = types;
-            }
+            public IgnoreTypesConverter(params Type[] types) => this.types = types;
             #endregion
 
             #region Methods
-            public override bool CanConvert(Type objectType)
-            {
-                return types.Any(x => x.IsAssignableFrom(objectType));
-            }
+            public override bool CanConvert(Type objectType) => types.Any(x => x.IsAssignableFrom(objectType));
             public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
             {
                 reader.Skip();
                 return default;
             }
-            public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
-            {
-                writer.WriteNull();
-            }
+            public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer) => writer.WriteNull();
             #endregion
         }
 
@@ -194,10 +185,7 @@ namespace Trackman
                 reader.Skip();
                 return hasExistingValue ? existingValue : default;
             }
-            public override void WriteJson(JsonWriter writer, AnimationCurve value, JsonSerializer serializer)
-            {
-                writer.WriteNull();
-            }
+            public override void WriteJson(JsonWriter writer, AnimationCurve value, JsonSerializer serializer) => writer.WriteNull();
             #endregion
         }
 
@@ -210,26 +198,18 @@ namespace Trackman
                 {
                     if (type.BaseType is not null && type.BaseType != typeof(MonoBehaviour)) AddMembers(type.BaseType, members);
 
-                    foreach (FieldInfo info in type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly))
-                    {
-                        if (info.Name.Contains("<") || info.Name.Contains(">")) continue;
-                        if (info.FieldType.IsSubclassOf(typeof(Object)) && !info.FieldType.IsSubclassOf(typeof(MonoBehaviour))) continue;
-                        if (info.FieldType.IsInterface) continue;
-                        if (info.GetCustomAttribute<NonSerializedAttribute>() is not null) continue;
-
-                        members.Add(info);
-                    }
+                    members.AddRange(type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly)
+                                         .Where(info => (!info.Name.Contains("<") && !info.Name.Contains(">")) &&
+                                                        (!info.FieldType.IsSubclassOf(typeof(Object)) || info.FieldType.IsSubclassOf(typeof(MonoBehaviour))) &&
+                                                        !info.FieldType.IsInterface &&
+                                                        info.GetCustomAttribute<NonSerializedAttribute>() is null));
 
                     if (!type.IsRecord()) return;
 
-                    foreach (PropertyInfo info in type.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly))
-                    {
-                        if (info.PropertyType.IsSubclassOf(typeof(Object)) && !info.PropertyType.IsSubclassOf(typeof(MonoBehaviour))) continue;
-                        if (info.PropertyType.IsInterface) continue;
-                        if (info.GetCustomAttribute<NonSerializedAttribute>() is not null) continue;
-
-                        members.Add(info);
-                    }
+                    members.AddRange(type.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly)
+                                         .Where(info => (!info.PropertyType.IsSubclassOf(typeof(Object)) || info.PropertyType.IsSubclassOf(typeof(MonoBehaviour))) &&
+                                                        !info.PropertyType.IsInterface &&
+                                                        info.GetCustomAttribute<NonSerializedAttribute>() is null));
                 }
 
                 List<MemberInfo> members = new();
@@ -255,19 +235,24 @@ namespace Trackman
         #region Constructors
         static JsonUtilitySharedBase()
         {
-            settings = new JsonSerializerSettings();
-            settings.Converters.Add(new IgnoreTypesConverter(typeof(Object)));
-            settings.Converters.Add(new AnimationCurveConverter());
-            settings.Converters.Add(new ColorConverter());
-            settings.Converters.Add(new Vector2Converter());
-            settings.Converters.Add(new Vector2IntConverter());
-            settings.Converters.Add(new Vector3Converter());
-            settings.Converters.Add(new Vector3IntConverter());
-            settings.Converters.Add(new Vector4Converter());
-            settings.Converters.Add(new QuaternionConverter());
-            settings.Converters.Add(new StringEnumConverter());
-            settings.NullValueHandling = NullValueHandling.Ignore;
-            settings.ContractResolver = new IgnorePropertiesContractResolver { IgnoreSerializableAttribute = false, IgnoreShouldSerializeMembers = false };
+            settings = new JsonSerializerSettings
+            {
+                Converters = new List<JsonConverter>
+                {
+                    new IgnoreTypesConverter(typeof(Object)),
+                    new AnimationCurveConverter(),
+                    new ColorConverter(),
+                    new Vector2Converter(),
+                    new Vector2IntConverter(),
+                    new Vector3Converter(),
+                    new Vector3IntConverter(),
+                    new Vector4Converter(),
+                    new QuaternionConverter(),
+                    new StringEnumConverter()
+                },
+                NullValueHandling = NullValueHandling.Ignore,
+                ContractResolver = new IgnorePropertiesContractResolver { IgnoreSerializableAttribute = false, IgnoreShouldSerializeMembers = false }
+            };
             serializer = JsonSerializer.Create(settings);
         }
         #endregion
@@ -275,28 +260,22 @@ namespace Trackman
         #region Methods
         public static string ToJson<T>(T value, bool prettyPrint)
         {
-            using (StringWriter stringWriter = new())
-            using (JsonTextWriter jsonTextWriter = new(stringWriter) { Formatting = prettyPrint ? Formatting.Indented : Formatting.None })
-            {
-                serializer.Serialize(jsonTextWriter, value);
-                return stringWriter.ToString();
-            }
+            using StringWriter stringWriter = new();
+            using JsonTextWriter jsonTextWriter = new(stringWriter) { Formatting = prettyPrint ? Formatting.Indented : Formatting.None };
+            serializer.Serialize(jsonTextWriter, value);
+            return stringWriter.ToString();
         }
         public static T FromJson<T>(string json)
         {
-            using (StringReader stringReader = new(json))
-            using (JsonTextReader jsonTextReader = new(stringReader))
-            {
-                return serializer.Deserialize<T>(jsonTextReader);
-            }
+            using StringReader stringReader = new(json);
+            using JsonTextReader jsonTextReader = new(stringReader);
+            return serializer.Deserialize<T>(jsonTextReader);
         }
         #endregion
     }
 
-    public class JsonUtilityShared<Gen> : JsonUtilitySharedBase<Gen>
+    public class JsonUtilityShared<TGen> : JsonUtilitySharedBase<TGen>
     {
-        public const string contentType = "application/json";
-
         #region Containers
         class ArrayPool : IArrayPool<char>
         {
@@ -336,10 +315,8 @@ namespace Trackman
         {
             using StringWriter stringWriter = new();
             using JsonTextWriter jsonTextWriter = new(stringWriter) { Formatting = prettyPrint ? Formatting.Indented : Formatting.None };
-            if (useArrayPool)
-            {
-                jsonTextWriter.ArrayPool = arrayPool;
-            }
+
+            if (useArrayPool) jsonTextWriter.ArrayPool = arrayPool;
 
             serializer.Serialize(jsonTextWriter, value);
             return stringWriter.ToString();
@@ -370,10 +347,8 @@ namespace Trackman
         {
             using StringReader stringReader = new(json);
             using JsonTextReader jsonTextReader = new(stringReader);
-            if (useArrayPool)
-            {
-                jsonTextReader.ArrayPool = arrayPool;
-            }
+
+            if (useArrayPool) jsonTextReader.ArrayPool = arrayPool;
 
             return serializer.Deserialize(jsonTextReader, type);
         }
@@ -381,10 +356,8 @@ namespace Trackman
         {
             using StringReader stringReader = new(json);
             using JsonTextReader jsonTextReader = new(stringReader);
-            if (useArrayPool)
-            {
-                jsonTextReader.ArrayPool = arrayPool;
-            }
+
+            if (useArrayPool) jsonTextReader.ArrayPool = arrayPool;
 
             return serializer.Deserialize<T>(jsonTextReader);
         }
@@ -394,11 +367,7 @@ namespace Trackman
             for (int i = 0; i < objects.Length; ++i) objects[i] = Convert(objects[i], types[i]);
             return objects;
         }
-        public static object Convert(object obj, Type parameterType)
-        {
-            if (TryConvert(obj, parameterType, out object result)) return result;
-            else throw (Exception)result;
-        }
+        public static object Convert(object obj, Type parameterType) => TryConvert(obj, parameterType, out object result) ? result : throw (Exception)result;
         public static T Convert<T>(object obj) => (T)Convert(obj, typeof(T));
         public static bool TryConvert(object obj, Type parameterType, out object result, bool silent = false, bool ignoreResult = false)
         {
@@ -425,7 +394,8 @@ namespace Trackman
                 result = obj;
                 return true;
             }
-            else if (obj is JArray jarray && parameterType.IsArray)
+
+            if (obj is JArray jarray && parameterType.IsArray)
             {
                 Type elementType = parameterType.GetElementType();
                 Array array = Array.CreateInstance(elementType, jarray.Count);
@@ -433,9 +403,7 @@ namespace Trackman
                 for (int i = 0; i < jarray.Count; ++i)
                 {
                     if (TryConvert(jarray[i], elementType, out object element))
-                    {
                         array.SetValue(element, i);
-                    }
                     else
                     {
                         Debug.LogWarning($"Cannot convert {DebugUtility.GetString(obj)} to {parameterType}, element {DebugUtility.GetString(jarray[i])} to {elementType}");
@@ -445,23 +413,24 @@ namespace Trackman
 
                 return (result = array) is not null;
             }
-            else if (obj is JObject jobject && (!parameterType.IsPrimitive || CompareJTokenType(jobject.Type, parameterType)) && (parameterType.IsValueType || parameterType.IsClass)) return (result = jobject.ToObject(parameterType, serializer)) is not null;
-            else if (obj is JValue jvalue && (!parameterType.IsPrimitive || CompareJTokenType(jvalue.Type, parameterType)) && (parameterType.IsValueType || parameterType.IsClass)) return (result = jvalue.ToObject(parameterType, serializer)) is not null;
-            else if (parameterType.IsEnum)
+
+            if (obj is JObject jobject && (!parameterType.IsPrimitive || CompareJTokenType(jobject.Type, parameterType)) && (parameterType.IsValueType || parameterType.IsClass)) return (result = jobject.ToObject(parameterType, serializer)) is not null;
+            if (obj is JValue jvalue && (!parameterType.IsPrimitive || CompareJTokenType(jvalue.Type, parameterType)) && (parameterType.IsValueType || parameterType.IsClass)) return (result = jvalue.ToObject(parameterType, serializer)) is not null;
+            if (parameterType.IsEnum)
             {
                 if (obj is string stringEnumValue) return (result = Enum.Parse(parameterType, stringEnumValue)) is not null;
-                else if (objType.IsPrimitive) return (result = Enum.ToObject(parameterType, obj)) is not null;
+                if (objType.IsPrimitive) return (result = Enum.ToObject(parameterType, obj)) is not null;
             }
             else if (obj is string stringValue)
             {
                 if (parameterType == typeof(byte[])) return (result = Converter.FromBase64String(stringValue)) is not null;
-                else if (typeof(Object).IsAssignableFrom(parameterType)) return (result = default) is not null;
-                else if (parameterType == typeof(Color)) return (result = FromJson<Color>(stringValue)) is not null;
-                else if (parameterType == typeof(Vector2)) return (result = FromJson<Vector2>(stringValue)) is not null;
-                else if (parameterType == typeof(Vector3)) return (result = FromJson<Vector3>(stringValue)) is not null;
-                else if (parameterType == typeof(Vector4)) return (result = FromJson<Vector4>(stringValue)) is not null;
-                else if (parameterType == typeof(Quaternion)) return (result = FromJson<Quaternion>(stringValue)) is not null;
-                else if (parameterType.IsValueType || parameterType.IsClass) return (result = FromJson(stringValue, parameterType)) is not null;
+                if (typeof(Object).IsAssignableFrom(parameterType)) return (result = default) is not null;
+                if (parameterType == typeof(Color)) return (result = FromJson<Color>(stringValue)) is not null;
+                if (parameterType == typeof(Vector2)) return (result = FromJson<Vector2>(stringValue)) is not null;
+                if (parameterType == typeof(Vector3)) return (result = FromJson<Vector3>(stringValue)) is not null;
+                if (parameterType == typeof(Vector4)) return (result = FromJson<Vector4>(stringValue)) is not null;
+                if (parameterType == typeof(Quaternion)) return (result = FromJson<Quaternion>(stringValue)) is not null;
+                if (parameterType.IsValueType || parameterType.IsClass) return (result = FromJson(stringValue, parameterType)) is not null;
             }
             else if (objType.IsPrimitive && parameterType.IsPrimitive) return (result = Converter.ChangeType(obj, parameterType)) is not null;
 
@@ -531,22 +500,10 @@ namespace Trackman
                     if (text[i] == '}') jsonDepth--;
                 }
 
-                if (!inQuote && jsonDepth == 0)
-                {
-                    if (text[i] == '[' || text[i] == ']') inArray = !inArray;
-                }
-
-                if (!inQuote && jsonDepth == 0 && !inArray)
-                {
-                    if (Array.Exists(separators, x => x == text[i]))
-                    {
-                        return true;
-                    }
-                    else if (i == length - 1)
-                    {
-                        break;
-                    }
-                }
+                if ((!inQuote && jsonDepth == 0) && (text[i] == '[' || text[i] == ']')) inArray = !inArray;
+                if (inQuote || jsonDepth != 0 || inArray) continue;
+                if (Array.Exists(separators, x => x == text[i])) return true;
+                if (i == length - 1) break;
             }
 
             return false;
