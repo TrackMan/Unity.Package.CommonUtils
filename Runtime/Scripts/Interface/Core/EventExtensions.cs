@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Threading.Tasks;
 using UnityEngine;
 
@@ -11,38 +10,65 @@ namespace Trackman
     public static class EventExtensions
     {
         #region Methods
-        public static IEnumerable<T> FindEvents<T>(this MonoBehaviour _) where T : IEvent => ServiceLocator.FindInterfaces<T>().OrderBy(x => x.Order);
-        public static void ExecuteEvent<T>(this MonoBehaviour value, Action<T> execute) where T : IEvent => FindEventsActive<T>(value).ForEach(execute);
-        public static void ExecuteEventValid<T>(this MonoBehaviour value, Action<T> execute) where T : IEvent => FindEventsValid<T>(value).ForEach(execute);
-
-        public static async Task ExecuteEventAsync<T>(this MonoBehaviour value, Func<T, Task> execute) where T : IEvent
+        public static IEnumerable<T> FindEvents<T>(this MonoBehaviour _) where T : IEvent => FindEventsOrdered<T>();
+        public static void ExecuteEvent<T>(this MonoBehaviour _, Action<T> execute) where T : IEvent
         {
-            foreach (T item in FindEventsActive<T>(value)) await execute(item);
+            foreach (T target in FindEventsOrdered<T>())
+            {
+                if (target is MonoBehaviour { isActiveAndEnabled: true })
+                    execute(target);
+            }
         }
-        public static async Task<List<U>> ExecuteEventFuncAsync<T, U>(this MonoBehaviour value, Func<T, Task<U>> execute) where T : IEvent
+        public static void ExecuteEventValid<T>(this MonoBehaviour _, Action<T> execute) where T : IEvent
         {
-            List<U> results = new();
-            foreach (T item in FindEventsActive<T>(value))
-                results.Add(await execute(item));
-
+            foreach (T target in FindEventsOrdered<T>())
+            {
+                if (target.CanExecute && target is MonoBehaviour { isActiveAndEnabled: true })
+                    execute(target);
+            }
+        }
+        public static async Task ExecuteEventAsync<T>(this MonoBehaviour _, Func<T, Task> execute) where T : IEvent
+        {
+            foreach (T target in FindEventsOrdered<T>())
+            {
+                if (target is MonoBehaviour { isActiveAndEnabled: true })
+                    await execute(target);
+            }
+        }
+        public static async Task<List<U>> ExecuteEventFuncAsync<T, U>(this MonoBehaviour _, Func<T, Task<U>> execute) where T : IEvent
+        {
+            T[] events = FindEventsOrdered<T>();
+            List<U> results = new(events.Length);
+            foreach (T target in events)
+            {
+                if (target is MonoBehaviour { isActiveAndEnabled: true })
+                    results.Add(await execute(target));
+            }
             return results;
         }
-        public static async Task<U> ExecuteEventFuncAsync<T, U>(this MonoBehaviour value, Func<T, Task<U>> execute, Func<U, bool> predicate) where T : IEvent
+        public static async Task<U> ExecuteEventFuncAsync<T, U>(this MonoBehaviour _, Func<T, Task<U>> execute, Func<U, bool> predicate) where T : IEvent
         {
             U result = default;
-            foreach (T item in FindEventsActive<T>(value))
+            foreach (T target in FindEventsOrdered<T>())
             {
-                U obj = await execute(item.As<T>());
-                if (predicate(obj)) result = obj;
+                if (target is MonoBehaviour { isActiveAndEnabled: true })
+                {
+                    U obj = await execute(target);
+                    if (predicate(obj))
+                        result = obj;
+                }
             }
-
             return result;
         }
         #endregion
 
         #region Support Methods
-        static IEnumerable<T> FindEventsActive<T>(MonoBehaviour value) where T : IEvent => FindEvents<T>(value).Where(x => x is MonoBehaviour { isActiveAndEnabled: true });
-        static IEnumerable<T> FindEventsValid<T>(MonoBehaviour value) where T : IEvent => FindEvents<T>(value).Where(x => x.CanExecute && x is MonoBehaviour { isActiveAndEnabled: true });
+        static T[] FindEventsOrdered<T>() where T : IEvent
+        {
+            T[] targets = ServiceLocator.FindInterfaces<T>();
+            Array.Sort(targets, (x, y) => x.Order.CompareTo(y.Order));
+            return targets;
+        }
         #endregion
     }
 }
