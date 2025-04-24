@@ -295,9 +295,23 @@ namespace Trackman
             {
                 await task;
             }
-            catch (Exception e)
+            catch (Exception exception)
             {
-                Debug.LogException(e);
+                Debug.LogException(exception);
+            }
+        }
+        public static async void CancellableFireAndForget(this Task task)
+        {
+            try
+            {
+                await task;
+            }
+            catch (OperationCanceledException)
+            {
+            }
+            catch (Exception exception)
+            {
+                Debug.LogException(exception);
             }
         }
         public static Task ContinueWithResult<T>(this Task<T> task, Action<T> action) => task.ContinueWith(x => action(x.Result));
