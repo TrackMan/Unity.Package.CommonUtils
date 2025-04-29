@@ -103,16 +103,26 @@ namespace Trackman
         #endregion
 
         #region Constructors
-        public ProductPrefs(Scene scene)
+        public ProductPrefs(GameObject gameObject) => ScopePrefix = ProductName(gameObject);
+        #endregion
+
+        #region Methods
+        public static string ProductName(GameObject gameObject)
         {
 #if UNITY_EDITOR
-            if (!scene.IsValid()) throw new ArgumentException();
+            string assetPath = "";
 
-            UnityEditor.PackageManager.PackageInfo scenePackageInfo = UnityEditor.PackageManager.PackageInfo.FindForAssetPath(scene.path);
-            ScopePrefix = scenePackageInfo?.displayName.Split('.')[^1] ?? Application.productName.Replace(" ", "");
-#else
-            ScopePrefix = Application.productName;
+            if (gameObject.scene.IsValid()) assetPath = gameObject.scene.path;
+
+            // ReSharper disable once Unity.NoNullPatternMatching
+            if (assetPath.NullOrEmpty() && UnityEditor.SceneManagement.PrefabStageUtility.GetPrefabStage(gameObject) is { } stage && stage)
+                assetPath = stage.assetPath;
+
+            if (assetPath.NotNullOrEmpty() && UnityEditor.PackageManager.PackageInfo.FindForAssetPath(assetPath) is { } packageInfo)
+                return packageInfo.displayName.Split('.')[^1];
+
 #endif
+            return Application.productName;
         }
         #endregion
     }
