@@ -162,7 +162,10 @@ namespace Trackman
         {
             Type monoType = mono.GetType();
             if (injectTargets.TryGetValue(monoType, out List<(PropertyInfo property, MonoBehaviour target)> targets))
-                targets.RemoveAll(x => x.target == mono);
+            {
+                foreach ((PropertyInfo property, MonoBehaviour target) in targets)
+                    property.SetValue(target, default);
+            }
         }
         public static void Add<T>(this T mono) where T : MonoBehaviour, IMonoBehaviourCollectionItem
         {

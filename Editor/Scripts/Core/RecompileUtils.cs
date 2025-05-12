@@ -31,7 +31,7 @@ namespace Trackman.Editor.Core
 
             try
             {
-                Type.GetType("Packages.Rider.Editor.RiderScriptEditor, Unity.Rider.Editor").GetMethod("SyncSolution", BindingFlags.Static | BindingFlags.Public).Invoke(null, Array.Empty<object>());
+                Type.GetType("Packages.Rider.Editor.RiderScriptEditor, Unity.Rider.Editor").GetMethod(nameof(SyncSolution), BindingFlags.Static | BindingFlags.Public).Invoke(null, Array.Empty<object>());
                 Debug.Log($"[{nameof(RecompileUtils)}] Solution sync done");
             }
             catch (Exception exception)
