@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using System.Linq;
-using System.Runtime.CompilerServices;
+using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
 using Debug = UnityEngine.Debug;
 using Object = UnityEngine.Object;
@@ -61,9 +61,9 @@ namespace Trackman
             };
 
         // ReSharper disable InconsistentNaming
-        public static bool ANY<T>(this T value, T arg) where T : Enum => (Unsafe.As<T, long>(ref value) & Unsafe.As<T, long>(ref arg)) != 0;
+        public static bool ANY<T>(this T value, T arg) where T : unmanaged, Enum => (value.AsLong() & arg.AsLong()) != 0;
         public static bool ANY(this int value, int arg) => (value & arg) != 0;
-        public static bool AND<T>(this T value, T arg) where T : Enum => (Unsafe.As<T, long>(ref value) & Unsafe.As<T, long>(ref arg)) == Unsafe.As<T, long>(ref arg);
+        public static bool AND<T>(this T value, T arg) where T : unmanaged, Enum => (value.AsLong() & arg.AsLong()) == arg.AsLong();
         public static bool AND(this int value, int arg) => (value & arg) == arg;
 
         // ReSharper restore InconsistentNaming
@@ -317,6 +317,20 @@ namespace Trackman
             }
         }
         public static Task ContinueWithResult<T>(this Task<T> task, Action<T> action) => task.ContinueWith(x => action(x.Result));
+        #endregion
+
+        #region Support Methods
+        static ulong AsLong<T>(this T value) where T : unmanaged, Enum
+        {
+            return UnsafeUtility.SizeOf<T>() switch
+            {
+                sizeof(byte) => UnsafeUtility.As<T, byte>(ref value),
+                sizeof(ushort) => UnsafeUtility.As<T, ushort>(ref value),
+                sizeof(uint) => UnsafeUtility.As<T, uint>(ref value),
+                sizeof(ulong) => UnsafeUtility.As<T, ulong>(ref value),
+                _ => throw new NotSupportedException("Incorrect length for enum")
+            };
+        }
         #endregion
     }
 }
