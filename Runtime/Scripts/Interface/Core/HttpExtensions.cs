@@ -147,7 +147,7 @@ namespace Trackman
 
             if (request.result != UnityWebRequest.Result.Success)
             {
-                Debug.LogWarning($"[{type.Nick()}] {method} {request.url} = {request.result} \n{request.responseCode}\n{request.error}\n{DebugString(request.downloadHandler?.data)}");
+                Debug.LogWarning($"{type.Nick()} {method} {request.url} = {request.result} \n{request.responseCode}\n{request.error}\n{DebugString(request.downloadHandler?.data)}");
                 throw new HttpException(request.responseCode, request.error);
             }
 
