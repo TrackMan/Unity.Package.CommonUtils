@@ -1,6 +1,7 @@
 using System;
 using System.Buffers;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -434,7 +435,23 @@ namespace Trackman
             }
             else if (objType.IsPrimitive && parameterType.IsPrimitive) return (result = Converter.ChangeType(obj, parameterType)) is not null;
 
-            if (!silent) Debug.LogWarning($"Cannot convert {DebugUtility.GetString(obj)} of type {obj?.GetType()} to {parameterType}");
+            // IConvertible is not enough here, as it cannot guarantee conversion to the target type is possible, as it would only throw an exception at runtime,
+            // which is not ideal to catch here
+            TypeConverter fromTypeConverter = TypeDescriptor.GetConverter(obj);
+            if (fromTypeConverter.CanConvertTo(parameterType))
+            {
+                result = fromTypeConverter.ConvertTo(obj, parameterType);
+                return true;
+            }
+
+            TypeConverter toTypeConverter = TypeDescriptor.GetConverter(parameterType);
+            if (toTypeConverter.CanConvertFrom(objType))
+            {
+                result = toTypeConverter.ConvertFrom(obj);
+                return true;
+            }
+
+            if (!silent) Debug.LogWarning($"Cannot convert {DebugUtility.GetString(obj)} of type {obj.GetType()} to {parameterType}");
             return (result = default) is not null;
         }
 
