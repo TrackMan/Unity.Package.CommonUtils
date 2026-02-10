@@ -10,6 +10,7 @@ using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
 using Primitively;
+using Trackman.VirtualGolf.SharedModel;
 using UnityEngine;
 using Object = UnityEngine.Object;
 using Converter = System.Convert;
@@ -371,7 +372,7 @@ namespace Trackman
         }
         public static object Convert(object obj, Type parameterType) => TryConvert(obj, parameterType, out object result) ? result : throw (Exception)result;
         public static T Convert<T>(object obj) => (T)Convert(obj, typeof(T));
-        public static bool TryConvert(object obj, Type parameterType, out object result, bool silent = false, bool ignoreResult = false)
+        public static bool TryConvert(object source, Type targetType, out object result, bool silent = false, bool ignoreResult = false)
         {
             bool CompareJTokenType(JTokenType type, Type parameterType)
             {
@@ -384,22 +385,22 @@ namespace Trackman
                 }
             }
 
-            if (obj is null)
+            if (source is null)
             {
                 result = default;
-                return parameterType.IsClass;
+                return targetType.IsClass;
             }
 
-            Type objType = obj.GetType();
-            if (parameterType.IsAssignableFrom(objType) || parameterType == typeof(object))
+            Type sourceType = source.GetType();
+            if (targetType.IsAssignableFrom(sourceType) || targetType == typeof(object))
             {
-                result = obj;
+                result = source;
                 return true;
             }
 
-            if (obj is JArray jarray && parameterType.IsArray)
+            if (source is JArray jarray && targetType.IsArray)
             {
-                Type elementType = parameterType.GetElementType();
+                Type elementType = targetType.GetElementType();
                 Array array = Array.CreateInstance(elementType, jarray.Count);
 
                 for (int i = 0; i < jarray.Count; ++i)
@@ -408,7 +409,7 @@ namespace Trackman
                         array.SetValue(element, i);
                     else
                     {
-                        Debug.LogWarning($"Cannot convert {DebugUtility.GetString(obj)} to {parameterType}, element {DebugUtility.GetString(jarray[i])} to {elementType}");
+                        Debug.LogWarning($"Cannot convert {DebugUtility.GetString(source)} to {targetType}, element {DebugUtility.GetString(jarray[i])} to {elementType}");
                         return (result = default) is not null;
                     }
                 }
@@ -416,43 +417,42 @@ namespace Trackman
                 return (result = array) is not null;
             }
 
-            if (obj is JObject jobject && (!parameterType.IsPrimitive || CompareJTokenType(jobject.Type, parameterType)) && (parameterType.IsValueType || parameterType.IsClass)) return (result = jobject.ToObject(parameterType, serializer)) is not null;
-            if (obj is JValue jvalue && (!parameterType.IsPrimitive || CompareJTokenType(jvalue.Type, parameterType)) && (parameterType.IsValueType || parameterType.IsClass)) return (result = jvalue.ToObject(parameterType, serializer)) is not null;
-            if (parameterType.IsEnum)
+            if (source is JObject jobject && (!targetType.IsPrimitive || CompareJTokenType(jobject.Type, targetType)) && (targetType.IsValueType || targetType.IsClass)) return (result = jobject.ToObject(targetType, serializer)) is not null;
+            if (source is JValue jvalue && (!targetType.IsPrimitive || CompareJTokenType(jvalue.Type, targetType)) && (targetType.IsValueType || targetType.IsClass)) return (result = jvalue.ToObject(targetType, serializer)) is not null;
+            if (targetType.IsEnum)
             {
-                if (obj is string stringEnumValue) return (result = Enum.Parse(parameterType, stringEnumValue)) is not null;
-                if (objType.IsPrimitive) return (result = Enum.ToObject(parameterType, obj)) is not null;
+                if (source is string stringEnumValue) return (result = Enum.Parse(targetType, stringEnumValue)) is not null;
+                if (sourceType.IsPrimitive) return (result = Enum.ToObject(targetType, source)) is not null;
             }
-            else if (obj is string stringValue)
+            else if (source is string stringValue)
             {
-                if (parameterType == typeof(byte[])) return (result = Converter.FromBase64String(stringValue)) is not null;
-                if (typeof(Object).IsAssignableFrom(parameterType)) return (result = default) is not null;
-                if (parameterType == typeof(Color)) return (result = FromJson<Color>(stringValue)) is not null;
-                if (parameterType == typeof(Vector2)) return (result = FromJson<Vector2>(stringValue)) is not null;
-                if (parameterType == typeof(Vector3)) return (result = FromJson<Vector3>(stringValue)) is not null;
-                if (parameterType == typeof(Vector4)) return (result = FromJson<Vector4>(stringValue)) is not null;
-                if (parameterType == typeof(Quaternion)) return (result = FromJson<Quaternion>(stringValue)) is not null;
-                if (parameterType.IsValueType || parameterType.IsClass) return (result = FromJson(stringValue, parameterType)) is not null;
+                if (targetType == typeof(byte[])) return (result = Converter.FromBase64String(stringValue)) is not null;
+                if (typeof(Object).IsAssignableFrom(targetType)) return (result = default) is not null;
+                if (targetType == typeof(Color)) return (result = FromJson<Color>(stringValue)) is not null;
+                if (targetType == typeof(Vector2)) return (result = FromJson<Vector2>(stringValue)) is not null;
+                if (targetType == typeof(Vector3)) return (result = FromJson<Vector3>(stringValue)) is not null;
+                if (targetType == typeof(Vector4)) return (result = FromJson<Vector4>(stringValue)) is not null;
+                if (targetType == typeof(Quaternion)) return (result = FromJson<Quaternion>(stringValue)) is not null;
+                if (targetType.IsValueType || targetType.IsClass) return (result = FromJson(stringValue, targetType)) is not null;
             }
-            else if (objType.IsPrimitive && parameterType.IsPrimitive) return (result = Converter.ChangeType(obj, parameterType)) is not null;
-            else if (typeof(IPrimitive).IsAssignableFrom(objType) || typeof(IPrimitive).IsAssignableFrom(parameterType))
+            else if (sourceType.IsPrimitive && targetType.IsPrimitive) return (result = Converter.ChangeType(source, targetType)) is not null;
+            else if (typeof(IPrimitive).IsAssignableFrom(targetType) && sourceType.IsPrimitive)
             {
-                TypeConverter fromTypeConverter = TypeDescriptor.GetConverter(obj);
-                if (fromTypeConverter.CanConvertTo(parameterType))
-                {
-                    result = fromTypeConverter.ConvertTo(obj, parameterType);
-                    return true;
-                }
+                PrimitiveInfo primitiveInfo = PrimitiveLibrary.Repository.GetType(targetType);
+                object changedType = Converter.ChangeType(source, primitiveInfo.ValueType);
 
-                TypeConverter toTypeConverter = TypeDescriptor.GetConverter(parameterType);
-                if (toTypeConverter.CanConvertFrom(objType))
-                {
-                    result = toTypeConverter.ConvertFrom(obj);
-                    return true;
-                }
+                TypeConverter fromTypeConverter = TypeDescriptor.GetConverter(targetType);
+                result = fromTypeConverter.ConvertFrom(changedType);
+                return true;
+            }
+            else if (typeof(IPrimitive).IsAssignableFrom(sourceType) && targetType.IsPrimitive)
+            {
+                IPrimitive primitively = (IPrimitive)source;
+                result = Converter.ChangeType(primitively.Value, targetType);
+                return true;
             }
 
-            if (!silent) Debug.LogWarning($"Cannot convert {DebugUtility.GetString(obj)} of type {obj.GetType()} to {parameterType}");
+            if (!silent) Debug.LogWarning($"Cannot convert {DebugUtility.GetString(source)} of type {source.GetType()} to {targetType}");
             return (result = default) is not null;
         }
 
