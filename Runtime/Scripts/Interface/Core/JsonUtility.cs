@@ -9,6 +9,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
+using Primitively;
 using UnityEngine;
 using Object = UnityEngine.Object;
 using Converter = System.Convert;
@@ -434,21 +435,21 @@ namespace Trackman
                 if (parameterType.IsValueType || parameterType.IsClass) return (result = FromJson(stringValue, parameterType)) is not null;
             }
             else if (objType.IsPrimitive && parameterType.IsPrimitive) return (result = Converter.ChangeType(obj, parameterType)) is not null;
-
-            // IConvertible is not enough here, as it cannot guarantee conversion to the target type is possible, as it would only throw an exception at runtime,
-            // which is not ideal to catch here
-            TypeConverter fromTypeConverter = TypeDescriptor.GetConverter(obj);
-            if (fromTypeConverter.CanConvertTo(parameterType))
+            else if (typeof(IPrimitive).IsAssignableFrom(objType) || typeof(IPrimitive).IsAssignableFrom(parameterType))
             {
-                result = fromTypeConverter.ConvertTo(obj, parameterType);
-                return true;
-            }
+                TypeConverter fromTypeConverter = TypeDescriptor.GetConverter(obj);
+                if (fromTypeConverter.CanConvertTo(parameterType))
+                {
+                    result = fromTypeConverter.ConvertTo(obj, parameterType);
+                    return true;
+                }
 
-            TypeConverter toTypeConverter = TypeDescriptor.GetConverter(parameterType);
-            if (toTypeConverter.CanConvertFrom(objType))
-            {
-                result = toTypeConverter.ConvertFrom(obj);
-                return true;
+                TypeConverter toTypeConverter = TypeDescriptor.GetConverter(parameterType);
+                if (toTypeConverter.CanConvertFrom(objType))
+                {
+                    result = toTypeConverter.ConvertFrom(obj);
+                    return true;
+                }
             }
 
             if (!silent) Debug.LogWarning($"Cannot convert {DebugUtility.GetString(obj)} of type {obj.GetType()} to {parameterType}");
